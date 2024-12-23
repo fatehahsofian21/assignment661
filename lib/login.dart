@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login2.dart'; // Import the second login page
 
+
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 

@@ -104,7 +104,7 @@ class LoginPage2 extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              // Sign In Button with underline
+              // Sign In Button
               GestureDetector(
                 onTap: () async {
                   String email = emailController.text.trim();
@@ -128,15 +128,18 @@ class LoginPage2 extends StatelessWidget {
                         password: password,
                       );
 
+                      // Extract userName from email
+                      String userName = email.split('@')[0];
+
                       // Navigate to main page on success
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const MainPage(),
+                          builder: (context) => MainPage(userName: userName),
                         ),
                       );
                     } on FirebaseAuthException catch (e) {
-                      // Handle specific FirebaseAuth errors
+                      // Handle FirebaseAuth errors
                       if (e.code == 'user-not-found') {
                         Fluttertoast.showToast(
                           msg: "No user found for that email.",
