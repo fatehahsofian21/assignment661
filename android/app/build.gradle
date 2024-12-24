@@ -1,5 +1,6 @@
 plugins {
     id "com.android.application"
+    id "com.google.gms.google-services" // Apply Google Services plugin
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
 }
@@ -10,8 +11,8 @@ android {
 
     defaultConfig {
         applicationId "com.example.assignment661"
-        minSdk 23
-        targetSdk 33
+        minSdk 23 // Minimum SDK version required
+        targetSdk 34 // Updated target SDK
         versionCode 1
         versionName "1.0"
     }
@@ -27,9 +28,17 @@ android {
 
     buildTypes {
         release {
+            // Debug signing config for release builds
             signingConfig signingConfigs.debug
         }
     }
+}
+
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:32.1.1') // Firebase BoM (Bill of Materials)
+    implementation 'com.google.firebase:firebase-auth-ktx' // Firebase Auth library
+    implementation 'com.google.firebase:firebase-analytics-ktx' // Analytics library (replaces core dependency)
+    implementation 'com.google.android.gms:play-services-auth:20.6.0' // Optional: Google Sign-In
 }
 
 flutter {
