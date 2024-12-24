@@ -48,7 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
             controller: controller,
             decoration: InputDecoration(
               labelText: title,
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
           ),
           actions: [
@@ -123,10 +123,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     right: 0,
                     child: GestureDetector(
                       onTap: _importProfileImage,
-                      child: CircleAvatar(
+                      child: const CircleAvatar(
                         radius: 15,
                         backgroundColor: Colors.white,
-                        child: const Icon(
+                        child: Icon(
                           Icons.edit,
                           size: 20,
                           color: Colors.grey,

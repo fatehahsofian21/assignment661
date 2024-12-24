@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 import 'profile_page.dart'; // Import the profile page
 import 'notification.dart'; // Import the notification page
 
@@ -19,64 +16,16 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late String userName;
   List<Map<String, dynamic>> children = [];
-  late FlutterLocalNotificationsPlugin localNotifications;
 
   @override
   void initState() {
     super.initState();
     userName = widget.userName;
-    initializeNotifications();
-  }
-
-  void initializeNotifications() {
-    tz.initializeTimeZones();
-    localNotifications = FlutterLocalNotificationsPlugin();
-
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const InitializationSettings initSettings =
-        InitializationSettings(android: androidSettings);
-
-    localNotifications.initialize(initSettings,
-        onDidReceiveNotificationResponse: (details) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => NotificationPage()),
-      );
-    });
-  }
-
-  void scheduleNotification(String title, String body, DateTime scheduledTime) {
-    localNotifications.zonedSchedule(
-      0,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledTime, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'main_channel',
-          'Main Channel',
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-      ),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
   }
 
   void _addChild() async {
     String childName = '';
     File? childPhoto;
-    Map<String, TimeOfDay> activityTimes = {
-      "Homework": const TimeOfDay(hour: 17, minute: 0),
-      "Study": const TimeOfDay(hour: 19, minute: 0),
-      "Sleep": const TimeOfDay(hour: 21, minute: 0),
-      "Eat": const TimeOfDay(hour: 12, minute: 0),
-      "Playtime": const TimeOfDay(hour: 15, minute: 0),
-    };
 
     TextEditingController nameController = TextEditingController();
 
@@ -132,60 +81,6 @@ class _MainPageState extends State<MainPage> {
                             : Image.file(childPhoto!, fit: BoxFit.cover),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Activity Reminders:",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    ...activityTimes.keys.map((activity) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(activity),
-                          TextButton(
-                            onPressed: () async {
-                              TimeOfDay? pickedTime = await showTimePicker(
-                                context: context,
-                                initialTime: activityTimes[activity]!,
-                              );
-
-                              if (pickedTime != null) {
-                                setState(() {
-                                  activityTimes[activity] = pickedTime;
-                                });
-
-                                // Schedule notifications
-                                final now = DateTime.now();
-                                final activityDateTime = DateTime(
-                                  now.year,
-                                  now.month,
-                                  now.day,
-                                  pickedTime.hour,
-                                  pickedTime.minute,
-                                );
-
-                                scheduleNotification(
-                                  "$activity Reminder",
-                                  "$activity for $childName in 10 minutes!",
-                                  activityDateTime.subtract(
-                                      const Duration(minutes: 10)),
-                                );
-
-                                scheduleNotification(
-                                  "$activity Reminder",
-                                  "Time for $activity for $childName!",
-                                  activityDateTime,
-                                );
-                              }
-                            },
-                            child: Text(
-                              activityTimes[activity]!.format(context),
-                              style: const TextStyle(color: Colors.green),
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
                   ],
                 ),
               ),
@@ -203,184 +98,12 @@ class _MainPageState extends State<MainPage> {
                         children.add({
                           "name": nameController.text,
                           "photo": childPhoto,
-                          "activityTimes": activityTimes,
-                          "dob": null,
-                          "age": null,
                           "color": Colors.pink.shade100, // Default pastel color
                           "fontColor": Colors.black, // Default font color
                         });
                       });
                       Navigator.pop(context);
                     }
-                  },
-                  child: const Text("Save"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _editChildDetails(int index) async {
-    TextEditingController nameController =
-        TextEditingController(text: children[index]["name"]);
-    TextEditingController dobController =
-        TextEditingController(text: children[index]["dob"]);
-    TextEditingController ageController =
-        TextEditingController(text: children[index]["age"]?.toString() ?? '');
-    Color selectedColor = children[index]["color"];
-    Color selectedFontColor = children[index]["fontColor"] ?? Colors.black; // Default to black
-    Map<String, TimeOfDay> activityTimes = children[index]["activityTimes"];
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text("Edit Child Details"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: "Child's Name",
-                        hintText: "Enter child's name",
-                      ),
-                    ),
-                    TextField(
-                      controller: dobController,
-                      decoration: const InputDecoration(
-                        labelText: "Date of Birth",
-                        hintText: "Enter date of birth",
-                      ),
-                    ),
-                    TextField(
-                      controller: ageController,
-                      decoration: const InputDecoration(
-                        labelText: "Age",
-                        hintText: "Enter age",
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 10),
-                    const Text("Edit Activity Times:"),
-                    ...activityTimes.keys.map((activity) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(activity),
-                          TextButton(
-                            onPressed: () async {
-                              TimeOfDay? pickedTime = await showTimePicker(
-                                context: context,
-                                initialTime: activityTimes[activity]!,
-                              );
-
-                              if (pickedTime != null) {
-                                setState(() {
-                                  activityTimes[activity] = pickedTime;
-                                });
-                              }
-                            },
-                            child: Text(
-                              activityTimes[activity]!.format(context),
-                              style: const TextStyle(color: Colors.green),
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                    const SizedBox(height: 10),
-                    const Text("Select Card Color:"),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        Colors.pink.shade100,
-                        Colors.blue.shade100,
-                        Colors.green.shade100,
-                        Colors.yellow.shade100,
-                        Colors.orange.shade100,
-                        Colors.purple.shade100,
-                        Colors.teal.shade100,
-                      ].map((color) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedColor = color;
-                            });
-                          },
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: color,
-                              border: Border.all(
-                                color: selectedColor == color
-                                    ? Colors.black
-                                    : Colors.transparent,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text("Select Font Color:"),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        Colors.black,
-                        Colors.white,
-                        Colors.green,
-                        Colors.blue,
-                        Colors.purple,
-                        Colors.teal,
-                      ].map((color) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedFontColor = color;
-                            });
-                          },
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: color,
-                              border: Border.all(
-                                color: selectedFontColor == color
-                                    ? Colors.black
-                                    : Colors.transparent,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      children[index]["name"] = nameController.text;
-                      children[index]["dob"] = dobController.text;
-                      children[index]["age"] = int.tryParse(ageController.text);
-                      children[index]["color"] = selectedColor;
-                      children[index]["fontColor"] = selectedFontColor;
-                      children[index]["activityTimes"] = activityTimes;
-                    });
-                    Navigator.pop(context);
                   },
                   child: const Text("Save"),
                 ),
@@ -457,7 +180,7 @@ class _MainPageState extends State<MainPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 15),
-                      Text(
+                      const Text(
                         "Welcome Back",
                         style: TextStyle(
                           color: Colors.white,
@@ -481,14 +204,14 @@ class _MainPageState extends State<MainPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => NotificationPage(),
+                          builder: (context) => const NotificationPage(),
                         ),
                       );
                     },
                     child: Container(
                       width: 70,
                       height: 70,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
                       ),
@@ -522,9 +245,9 @@ class _MainPageState extends State<MainPage> {
                       ),
                     ],
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       SizedBox(width: 6),
                       Text(
                         "Add Child",
@@ -551,7 +274,7 @@ class _MainPageState extends State<MainPage> {
                     Map<String, dynamic> child = entry.value;
 
                     return GestureDetector(
-                      onTap: () => _editChildDetails(index),
+                      onTap: () => _deleteChild(index),
                       child: Container(
                         margin: const EdgeInsets.only(right: 15),
                         width: 180,
@@ -568,28 +291,6 @@ class _MainPageState extends State<MainPage> {
                         ),
                         child: Column(
                           children: [
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  if (value == "Edit") {
-                                    _editChildDetails(index);
-                                  } else if (value == "Delete") {
-                                    _deleteChild(index);
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem<String>(
-                                    value: "Edit",
-                                    child: Text("Edit"),
-                                  ),
-                                  const PopupMenuItem<String>(
-                                    value: "Delete",
-                                    child: Text("Delete"),
-                                  ),
-                                ],
-                              ),
-                            ),
                             const SizedBox(height: 10),
                             Center(
                               child: ClipOval(
@@ -608,32 +309,7 @@ class _MainPageState extends State<MainPage> {
                               style: TextStyle(
                                 fontSize: 25,
                                 fontWeight: FontWeight.bold,
-                                color: child["fontColor"] ?? Colors.black, // Default to black
-                              ),
-                            ),
-                            Text(
-                              "Activity",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: child["fontColor"] ?? Colors.black, // Default to black
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              "Age: ${child["age"]?? "N/A"} years old",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: child["fontColor"] ?? Colors.black, // Apply font color
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              "DOB: ${child["dob"] ?? "N/A"}",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: child["fontColor"] ?? Colors.black, // Apply font color
+                                color: child["fontColor"] ?? Colors.black,
                               ),
                             ),
                           ],
