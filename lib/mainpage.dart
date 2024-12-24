@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'profile_page.dart'; // Import the profile page
 import 'notification.dart'; // Import the notification page
 
 class MainPage extends StatefulWidget {
@@ -23,11 +22,25 @@ class _MainPageState extends State<MainPage> {
     userName = widget.userName;
   }
 
-  void _addChild() async {
-    String childName = '';
-    File? childPhoto;
+  void _addChild({Map<String, dynamic>? existingChild}) async {
+    String childName = existingChild?["name"] ?? '';
+    File? childPhoto = existingChild?["photo"];
+    String dob = existingChild?["dob"] ?? '';
+    int? age = existingChild?["age"];
+    Color cardColor = existingChild?["color"] ?? Colors.pink.shade100;
+    Color fontColor = existingChild?["fontColor"] ?? Colors.black;
+    Map<String, TimeOfDay> activityTimes = existingChild?["activityTimes"] ??
+        {
+          "Study": const TimeOfDay(hour: 17, minute: 0),
+          "Playtime": const TimeOfDay(hour: 15, minute: 0),
+          "Eat": const TimeOfDay(hour: 12, minute: 0),
+          "Homework": const TimeOfDay(hour: 19, minute: 0),
+          "Sleep": const TimeOfDay(hour: 21, minute: 0),
+        };
 
-    TextEditingController nameController = TextEditingController();
+    TextEditingController nameController =
+        TextEditingController(text: childName);
+    TextEditingController dobController = TextEditingController(text: dob);
 
     await showDialog(
       context: context,
@@ -35,7 +48,7 @@ class _MainPageState extends State<MainPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Add Child"),
+              title: Text(existingChild == null ? "Add Child" : "Edit Child"),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -46,6 +59,30 @@ class _MainPageState extends State<MainPage> {
                         labelText: "Child's Name",
                         hintText: "Enter child's name",
                       ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: dobController,
+                      decoration: const InputDecoration(
+                        labelText: "Date of Birth (YYYY-MM-DD)",
+                        hintText: "Enter DOB",
+                      ),
+                      onTap: () async {
+                        DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            dob =
+                                "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+                            dobController.text = dob;
+                            age = DateTime.now().year - pickedDate.year;
+                          });
+                        }
+                      },
                     ),
                     const SizedBox(height: 10),
                     GestureDetector(
@@ -81,6 +118,103 @@ class _MainPageState extends State<MainPage> {
                             : Image.file(childPhoto!, fit: BoxFit.cover),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    const Text("Select Card Color:"),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        Colors.pink.shade100,
+                        Colors.blue.shade100,
+                        Colors.green.shade100,
+                        Colors.yellow.shade100,
+                        Colors.orange.shade100,
+                        Colors.purple.shade100,
+                        Colors.teal.shade100,
+                      ].map((color) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              cardColor = color;
+                            });
+                          },
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: color,
+                              border: Border.all(
+                                color: cardColor == color
+                                    ? Colors.black
+                                    : Colors.transparent,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text("Select Font Color:"),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        Colors.black,
+                        Colors.white,
+                        Colors.green,
+                        Colors.blue,
+                        Colors.purple,
+                        Colors.teal,
+                      ].map((color) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              fontColor = color;
+                            });
+                          },
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: color,
+                              border: Border.all(
+                                color: fontColor == color
+                                    ? Colors.black
+                                    : Colors.transparent,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Activity Times:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    ...activityTimes.keys.map((activity) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(activity),
+                          TextButton(
+                            onPressed: () async {
+                              TimeOfDay? pickedTime = await showTimePicker(
+                                context: context,
+                                initialTime: activityTimes[activity]!,
+                              );
+                              if (pickedTime != null) {
+                                setState(() {
+                                  activityTimes[activity] = pickedTime;
+                                });
+                              }
+                            },
+                            child: Text(
+                              activityTimes[activity]!.format(context),
+                              style: const TextStyle(color: Colors.blue),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ],
                 ),
               ),
@@ -93,14 +227,29 @@ class _MainPageState extends State<MainPage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    if (nameController.text.isNotEmpty && childPhoto != null) {
+                    if (nameController.text.isNotEmpty &&
+                        dob.isNotEmpty &&
+                        childPhoto != null) {
                       setState(() {
-                        children.add({
-                          "name": nameController.text,
-                          "photo": childPhoto,
-                          "color": Colors.pink.shade100, // Default pastel color
-                          "fontColor": Colors.black, // Default font color
-                        });
+                        if (existingChild == null) {
+                          children.add({
+                            "name": nameController.text,
+                            "photo": childPhoto,
+                            "dob": dob,
+                            "age": age,
+                            "activityTimes": activityTimes,
+                            "color": cardColor,
+                            "fontColor": fontColor,
+                          });
+                        } else {
+                          existingChild["name"] = nameController.text;
+                          existingChild["photo"] = childPhoto;
+                          existingChild["dob"] = dob;
+                          existingChild["age"] = age;
+                          existingChild["activityTimes"] = activityTimes;
+                          existingChild["color"] = cardColor;
+                          existingChild["fontColor"] = fontColor;
+                        }
                       });
                       Navigator.pop(context);
                     }
@@ -115,7 +264,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  void _deleteChild(int index) {
+  void _deleteChild(Map<String, dynamic> child) {
     showDialog(
       context: context,
       builder: (context) {
@@ -125,16 +274,16 @@ class _MainPageState extends State<MainPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
+              child: const Text("No"),
             ),
             TextButton(
               onPressed: () {
                 setState(() {
-                  children.removeAt(index);
+                  children.remove(child);
                 });
                 Navigator.pop(context);
               },
-              child: const Text("Delete"),
+              child: const Text("Yes"),
             ),
           ],
         );
@@ -225,13 +374,12 @@ class _MainPageState extends State<MainPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 10),
             // Add Child Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 70.0),
               child: GestureDetector(
-                onTap: _addChild,
+                onTap: () => _addChild(),
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
@@ -245,79 +393,102 @@ class _MainPageState extends State<MainPage> {
                       ),
                     ],
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(width: 6),
-                      Text(
-                        "Add Child",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  child: const Center(
+                    child: Text(
+                      "Add Child",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 10),
             // Child Cards Section
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: children.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    Map<String, dynamic> child = entry.value;
-
-                    return GestureDetector(
-                      onTap: () => _deleteChild(index),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 15),
-                        width: 180,
-                        decoration: BoxDecoration(
-                          color: child["color"],
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.3),
-                              blurRadius: 5,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 10),
-                            Center(
-                              child: ClipOval(
+            SizedBox(
+              height: 300, // Ensure consistent card height
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: children.map((child) {
+                  return Stack(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _addChild(existingChild: child),
+                        child: Container(
+                          margin: const EdgeInsets.all(10),
+                          width: 180, // Ensure consistent card width
+                          decoration: BoxDecoration(
+                            color: child["color"],
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.3),
+                                blurRadius: 5,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ClipOval(
                                 child: Image.file(
                                   child["photo"],
-                                  width: 80,
-                                  height: 80,
+                                  width: 100,
+                                  height: 100,
                                   fit: BoxFit.cover,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              "${child["name"]}'s",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold,
-                                color: child["fontColor"] ?? Colors.black,
+                              const SizedBox(height: 10),
+                              Text(
+                                "${child["name"]}'s",
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold,
+                                  color: child["fontColor"],
+                                ),
                               ),
-                            ),
-                          ],
+                              Text(
+                                "Age: ${child["age"] ?? "N/A"}",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: child["fontColor"],
+                                ),
+                              ),
+                              Text(
+                                "DOB: ${child["dob"]}",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: child["fontColor"],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == "Delete") {
+                              _deleteChild(child);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem<String>(
+                              value: "Delete",
+                              child: Text("Delete"),
+                            ),
+                          ],
+                          icon: const Icon(Icons.more_vert),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
           ],
