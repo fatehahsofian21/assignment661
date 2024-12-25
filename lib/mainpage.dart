@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'notification.dart'; // Import the notification page
+import 'profile_page.dart'; // Import the profile page
 
 class MainPage extends StatefulWidget {
   final String userName;
@@ -15,11 +16,32 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late String userName;
   List<Map<String, dynamic>> children = [];
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
     userName = widget.userName;
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfilePage(
+            userName: userName,
+            email: "user@example.com", // Replace with actual email
+            dateOfBirth: "1990-01-01", // Replace with actual DOB
+            gender: "Female", // Replace with actual gender
+          ),
+        ),
+      );
+    }
   }
 
   void _addChild({Map<String, dynamic>? existingChild}) async {
@@ -130,6 +152,7 @@ class _MainPageState extends State<MainPage> {
                         Colors.orange.shade100,
                         Colors.purple.shade100,
                         Colors.teal.shade100,
+                        Colors.brown.shade100,
                       ].map((color) {
                         return GestureDetector(
                           onTap: () {
@@ -163,6 +186,8 @@ class _MainPageState extends State<MainPage> {
                         Colors.blue,
                         Colors.purple,
                         Colors.teal,
+                        Colors.orange,
+                        Colors.brown,
                       ].map((color) {
                         return GestureDetector(
                           onTap: () {
@@ -353,21 +378,22 @@ class _MainPageState extends State<MainPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const NotificationPage(),
+                          builder: (context) =>
+                              NotificationPage(children: children),
                         ),
                       );
                     },
                     child: Container(
-                      width: 70,
-                      height: 70,
+                      width: 80,
+                      height: 80,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
+                        color: Color.fromARGB(255, 245, 209, 209),
                       ),
                       child: const Icon(
                         Icons.notifications_active,
-                        size: 40,
-                        color: Color(0xFFEA4C89),
+                        size: 50,
+                        color: Color.fromARGB(255, 234, 76, 137),
                       ),
                     ),
                   ),
@@ -493,6 +519,30 @@ class _MainPageState extends State<MainPage> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: 'Notifications',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.pink,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
       ),
     );
   }
