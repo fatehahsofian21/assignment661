@@ -1,10 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'login.dart'; // Import the login.dart file
+import 'login2.dart'; // Import login2.dart
+import 'mainpage.dart'; // Import mainpage.dart for navigation
 
 void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Ensure proper initialization for Firebase
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure proper initialization for Firebase
   try {
     await Firebase.initializeApp(); // Initialize Firebase
   } catch (e) {
@@ -25,7 +26,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SplashScreen(), // Use SplashScreen as the starting page
+      initialRoute: '/', // Set the initial route
+      routes: {
+        '/': (context) => const SplashScreen(), // Splash screen route
+        '/login2': (context) => const LoginPage2(), // Add login2 route
+      },
     );
   }
 }

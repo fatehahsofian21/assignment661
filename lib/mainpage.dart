@@ -25,11 +25,8 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 3) {
+    if (index == 1) {
+      // Navigate to ProfilePage
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -41,6 +38,10 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
       );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
     }
   }
 
@@ -110,15 +111,48 @@ class _MainPageState extends State<MainPage> {
                     GestureDetector(
                       onTap: () async {
                         final ImagePicker picker = ImagePicker();
-                        final XFile? pickedFile = await picker.pickImage(
-                          source: ImageSource.gallery,
+                        await showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.photo),
+                                  title: const Text("Pick from Gallery"),
+                                  onTap: () async {
+                                    final XFile? pickedFile =
+                                        await picker.pickImage(
+                                      source: ImageSource.gallery,
+                                    );
+                                    if (pickedFile != null) {
+                                      setState(() {
+                                        childPhoto = File(pickedFile.path);
+                                      });
+                                    }
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.camera),
+                                  title: const Text("Take a Photo"),
+                                  onTap: () async {
+                                    final XFile? pickedFile =
+                                        await picker.pickImage(
+                                      source: ImageSource.camera,
+                                    );
+                                    if (pickedFile != null) {
+                                      setState(() {
+                                        childPhoto = File(pickedFile.path);
+                                      });
+                                    }
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ],
+                            );
+                          },
                         );
-
-                        if (pickedFile != null) {
-                          setState(() {
-                            childPhoto = File(pickedFile.path);
-                          });
-                        }
                       },
                       child: Container(
                         width: double.infinity,
@@ -284,33 +318,6 @@ class _MainPageState extends State<MainPage> {
               ],
             );
           },
-        );
-      },
-    );
-  }
-
-  void _deleteChild(Map<String, dynamic> child) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Delete Child"),
-          content: const Text("Are you sure you want to delete this child?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("No"),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  children.remove(child);
-                });
-                Navigator.pop(context);
-              },
-              child: const Text("Yes"),
-            ),
-          ],
         );
       },
     );
@@ -500,7 +507,32 @@ class _MainPageState extends State<MainPage> {
                         child: PopupMenuButton<String>(
                           onSelected: (value) {
                             if (value == "Delete") {
-                              _deleteChild(child);
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text("Delete Child"),
+                                    content: const Text(
+                                        "Are you sure you want to delete this child?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context),
+                                        child: const Text("No"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            children.remove(child);
+                                          });
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text("Yes"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
                             }
                           },
                           itemBuilder: (context) => [
@@ -521,18 +553,11 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color.fromARGB(255, 235, 152, 184),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -541,7 +566,7 @@ class _MainPageState extends State<MainPage> {
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.pink,
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: const Color.fromARGB(255, 71, 70, 70),
         onTap: _onItemTapped,
       ),
     );
