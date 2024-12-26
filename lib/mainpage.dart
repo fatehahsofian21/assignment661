@@ -4,12 +4,11 @@ import 'package:image_picker/image_picker.dart';
 import 'tracker.dart'; // Import tracker.dart for navigation
 import 'notification.dart'; // Import notification.dart for navigation
 import 'profile_page.dart'; // Import profile_page.dart for navigation
-import 'tracker.dart';
 
 class MainPage extends StatefulWidget {
   final String userName;
 
-  const MainPage({super.key, required this.userName});
+  const MainPage({Key? key, required this.userName}) : super(key: key);
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -75,7 +74,6 @@ class _MainPageState extends State<MainPage> {
               title: Text(existingChild == null ? "Add Child" : "Edit Child"),
               content: SingleChildScrollView(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: nameController,
@@ -187,7 +185,6 @@ class _MainPageState extends State<MainPage> {
                         Colors.orange.shade100,
                         Colors.purple.shade100,
                         Colors.teal.shade100,
-                        Colors.brown.shade100,
                       ].map((color) {
                         return GestureDetector(
                           onTap: () {
@@ -221,8 +218,6 @@ class _MainPageState extends State<MainPage> {
                         Colors.blue,
                         Colors.purple,
                         Colors.teal,
-                        Colors.orange,
-                        Colors.brown,
                       ].map((color) {
                         return GestureDetector(
                           onTap: () {
@@ -280,9 +275,7 @@ class _MainPageState extends State<MainPage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: const Text("Cancel"),
                 ),
                 TextButton(
@@ -324,40 +317,11 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  void _deleteChild(Map<String, dynamic> child) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Delete Child"),
-          content: const Text("Are you sure you want to delete this child?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("No"),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  children.remove(child);
-                });
-                Navigator.pop(context);
-              },
-              child: const Text("Yes"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _navigateToTracker() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TrackerPage(
-          childrenActivities: children, // Pass the children list
-        ),
+        builder: (context) => TrackerPage(childrenActivities: children),
       ),
     );
   }
@@ -447,6 +411,21 @@ class _MainPageState extends State<MainPage> {
               ),
             ),
             const SizedBox(height: 10),
+            // Track Progress Button
+            GestureDetector(
+              onTap: _navigateToTracker,
+              child: const Card(
+                color: Color.fromARGB(255, 179, 208, 238),
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                child: ListTile(
+                  leading: Icon(Icons.track_changes, color: Colors.black),
+                  title: Text("Track Progress"),
+                  subtitle: Text("Monitor your child's activities"),
+                  trailing: Icon(Icons.arrow_forward_ios),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             // Add Child Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 70.0),
@@ -455,7 +434,7 @@ class _MainPageState extends State<MainPage> {
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 240, 152, 117),
+                    color: const Color.fromARGB(255, 218, 160, 78),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
@@ -469,9 +448,8 @@ class _MainPageState extends State<MainPage> {
                     child: Text(
                       "Add Child",
                       style: TextStyle(
-                        color:Color.fromARGB(255, 61, 59, 61),
                         fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 17, 67, 196),
                       ),
                     ),
                   ),
@@ -480,8 +458,7 @@ class _MainPageState extends State<MainPage> {
             ),
             const SizedBox(height: 10),
             // Child Cards Section
-            SizedBox(
-              height: 300,
+            Expanded(
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: children.map((child) {
@@ -493,7 +470,7 @@ class _MainPageState extends State<MainPage> {
                           margin: const EdgeInsets.all(10),
                           width: 180,
                           decoration: BoxDecoration(
-                            color: child["color"],
+                            color: child["color"] ?? Colors.pink.shade100,
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
@@ -507,12 +484,14 @@ class _MainPageState extends State<MainPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ClipOval(
-                                child: Image.file(
-                                  child["photo"],
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                ),
+                                child: child["photo"] != null
+                                    ? Image.file(
+                                        child["photo"],
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.person, size: 60),
                               ),
                               const SizedBox(height: 10),
                               Text(
@@ -520,21 +499,21 @@ class _MainPageState extends State<MainPage> {
                                 style: TextStyle(
                                   fontSize: 25,
                                   fontWeight: FontWeight.bold,
-                                  color: child["fontColor"],
+                                  color: child["fontColor"] ?? Colors.black,
                                 ),
                               ),
                               Text(
                                 "Age: ${child["age"] ?? "N/A"}",
                                 style: TextStyle(
                                   fontSize: 18,
-                                  color: child["fontColor"],
+                                  color: child["fontColor"] ?? Colors.black,
                                 ),
                               ),
                               Text(
                                 "DOB: ${child["dob"]}",
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: child["fontColor"],
+                                  color: child["fontColor"] ?? Colors.black,
                                 ),
                               ),
                             ],
@@ -547,7 +526,31 @@ class _MainPageState extends State<MainPage> {
                         child: PopupMenuButton<String>(
                           onSelected: (value) {
                             if (value == "Delete") {
-                              _deleteChild(child);
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text("Delete Child"),
+                                    content: const Text(
+                                        "Are you sure you want to delete this child?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("No"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            children.remove(child);
+                                          });
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text("Yes"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
                             }
                           },
                           itemBuilder: (context) => [
@@ -564,26 +567,11 @@ class _MainPageState extends State<MainPage> {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 10),
-            // Track Progress Card
-            GestureDetector(
-              onTap: _navigateToTracker,
-              child: const Card(
-                color: Color.fromARGB(255, 179, 208, 238),
-                margin: EdgeInsets.symmetric(horizontal: 20),
-                child: ListTile(
-                  leading: Icon(Icons.track_changes, color: Colors.black),
-                  title: Text("Track Progress"),
-                  subtitle: Text("Monitor your child's activities"),
-                  trailing: Icon(Icons.arrow_forward_ios),
-                ),
-              ),
-            ),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 235, 152, 184),
+        backgroundColor: const Color.fromARGB(255, 240, 168, 215),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -595,7 +583,7 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.pink,
+        selectedItemColor: const Color.fromARGB(255, 212, 85, 127),
         unselectedItemColor: const Color.fromARGB(255, 71, 70, 70),
         onTap: _onItemTapped,
       ),
