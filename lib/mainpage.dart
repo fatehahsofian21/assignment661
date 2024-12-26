@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'notification.dart'; // Import the notification page
-import 'profile_page.dart'; // Import the profile page
+import 'tracker.dart'; // Import tracker.dart for navigation
+import 'notification.dart'; // Import notification.dart for navigation
+import 'profile_page.dart'; // Import profile_page.dart for navigation
+import 'tracker.dart';
 
 class MainPage extends StatefulWidget {
   final String userName;
@@ -26,15 +28,14 @@ class _MainPageState extends State<MainPage> {
 
   void _onItemTapped(int index) {
     if (index == 1) {
-      // Navigate to ProfilePage
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ProfilePage(
             userName: userName,
-            email: "user@example.com", // Replace with actual email
-            dateOfBirth: "1990-01-01", // Replace with actual DOB
-            gender: "Female", // Replace with actual gender
+            email: "user@example.com",
+            dateOfBirth: "1990-01-01",
+            gender: "Female",
           ),
         ),
       );
@@ -323,6 +324,44 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  void _deleteChild(Map<String, dynamic> child) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Delete Child"),
+          content: const Text("Are you sure you want to delete this child?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("No"),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  children.remove(child);
+                });
+                Navigator.pop(context);
+              },
+              child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToTracker() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TrackerPage(
+          childrenActivities: children, // Pass the children list
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -416,7 +455,7 @@ class _MainPageState extends State<MainPage> {
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 235, 122, 186),
+                    color: const Color.fromARGB(255, 240, 152, 117),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
@@ -430,6 +469,7 @@ class _MainPageState extends State<MainPage> {
                     child: Text(
                       "Add Child",
                       style: TextStyle(
+                        color:Color.fromARGB(255, 61, 59, 61),
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -441,7 +481,7 @@ class _MainPageState extends State<MainPage> {
             const SizedBox(height: 10),
             // Child Cards Section
             SizedBox(
-              height: 300, // Ensure consistent card height
+              height: 300,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: children.map((child) {
@@ -451,7 +491,7 @@ class _MainPageState extends State<MainPage> {
                         onTap: () => _addChild(existingChild: child),
                         child: Container(
                           margin: const EdgeInsets.all(10),
-                          width: 180, // Ensure consistent card width
+                          width: 180,
                           decoration: BoxDecoration(
                             color: child["color"],
                             borderRadius: BorderRadius.circular(15),
@@ -507,32 +547,7 @@ class _MainPageState extends State<MainPage> {
                         child: PopupMenuButton<String>(
                           onSelected: (value) {
                             if (value == "Delete") {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text("Delete Child"),
-                                    content: const Text(
-                                        "Are you sure you want to delete this child?"),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context),
-                                        child: const Text("No"),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            children.remove(child);
-                                          });
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text("Yes"),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
+                              _deleteChild(child);
                             }
                           },
                           itemBuilder: (context) => [
@@ -547,6 +562,21 @@ class _MainPageState extends State<MainPage> {
                     ],
                   );
                 }).toList(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Track Progress Card
+            GestureDetector(
+              onTap: _navigateToTracker,
+              child: const Card(
+                color: Color.fromARGB(255, 179, 208, 238),
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                child: ListTile(
+                  leading: Icon(Icons.track_changes, color: Colors.black),
+                  title: Text("Track Progress"),
+                  subtitle: Text("Monitor your child's activities"),
+                  trailing: Icon(Icons.arrow_forward_ios),
+                ),
               ),
             ),
           ],

@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'login.dart'; // Import the login.dart file
 import 'login2.dart'; // Import login2.dart
-import 'mainpage.dart'; // Import mainpage.dart for navigation
+// Import mainpage.dart for navigation
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure proper initialization for Firebase
