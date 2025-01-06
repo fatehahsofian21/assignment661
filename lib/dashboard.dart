@@ -46,7 +46,6 @@ class _DashboardPageState extends State<DashboardPage> {
     fetchNotes();
   }
 
-  /// Fetch notes from Firestore
   Future<void> fetchNotes() async {
     try {
       final snapshot = await FirebaseFirestore.instance
@@ -66,7 +65,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  /// Add or update a note in Firestore
   Future<void> addOrUpdateNoteInFirestore(int day, String note) async {
     try {
       final docRef = FirebaseFirestore.instance
@@ -97,11 +95,10 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  /// Delete a note from Firestore
   Future<void> deleteNoteInFirestore(int day) async {
     bool? confirm = await showDialog(
       context: context,
-      barrierDismissible: false, // Prevent dismissing by clicking outside
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Delete Event'),
         content: const Text('Are you sure you want to delete this event?'),
@@ -208,28 +205,29 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.pushNamed(context, '/mainpage');
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
+                          backgroundColor:
+                              const Color.fromARGB(255, 203, 169, 105),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: const Center(
                           child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12.0),
+                            padding: EdgeInsets.symmetric(vertical: 10.0),
                             child: Text(
                               '+ Make Appointment',
                               style:
-                                  TextStyle(fontSize: 18, color: Colors.white),
+                                  TextStyle(fontSize: 16, color: Colors.white),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: Colors.grey.shade200,
+                          color: const Color.fromARGB(255, 210, 196, 216),
                         ),
                         child: Column(
                           children: [
@@ -240,7 +238,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             const SizedBox(height: 10),
                             Table(
-                              border: TableBorder.all(color: Colors.grey),
+                              border: TableBorder.all(
+                                  color: const Color.fromARGB(255, 0, 0, 0)),
                               children: [
                                 TableRow(
                                   children: [
@@ -255,7 +254,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                     ])
                                       Container(
                                         padding: const EdgeInsets.all(8),
-                                        color: Colors.blueAccent,
+                                        color: const Color.fromARGB(
+                                            255, 197, 154, 186),
                                         child: Center(
                                           child: Text(
                                             day,
@@ -285,42 +285,18 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.white),
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: Colors.orangeAccent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'New Event',
-                                  style:
-                                      TextStyle(fontSize: 18, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Container(
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: Colors.greenAccent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'New Event',
-                                  style:
-                                      TextStyle(fontSize: 18, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      SizedBox(
+                        height: 120,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            _buildImageBox('assets/d.jpg', Colors.orangeAccent),
+                            const SizedBox(width: 10),
+                            _buildImageBox('assets/e.jpg', Colors.greenAccent),
+                            const SizedBox(width: 10),
+                            _buildImageBox('assets/f.jpg', Colors.blueAccent),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -348,6 +324,23 @@ class _DashboardPageState extends State<DashboardPage> {
             label: 'My Acc',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImageBox(String imagePath, Color borderColor) {
+    return Container(
+      width: 120,
+      decoration: BoxDecoration(
+        color: borderColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.asset(
+          imagePath,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
@@ -383,7 +376,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     height: 40,
                     width: 40,
                     decoration: const BoxDecoration(
-                      color: Colors.blue,
+                      color: Color.fromARGB(255, 181, 178, 178),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -430,9 +423,7 @@ class _DashboardPageState extends State<DashboardPage> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: Text(notes.containsKey(day)
-              ? 'Edit Note for $day'
-              : 'Add Note for $day'),
+          title: Text(notes.containsKey(day) ? 'Edit Note ' : 'Add Note '),
           content: TextField(
             onChanged: (value) => newNote = value,
             controller: TextEditingController(text: newNote),
@@ -453,14 +444,13 @@ class _DashboardPageState extends State<DashboardPage> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                if (newNote.isNotEmpty) {
-                  addOrUpdateNoteInFirestore(day, newNote);
-                }
-                Navigator.pop(context);
-              },
-              child: Text(notes.containsKey(day) ? 'Update' : 'Save'),
-            ),
+                onPressed: () {
+                  if (newNote.isNotEmpty) {
+                    addOrUpdateNoteInFirestore(day, newNote);
+                  }
+                  Navigator.pop(context);
+                },
+                child: Text(notes.containsKey(day) ? 'Update' : 'Save')),
           ],
         );
       },

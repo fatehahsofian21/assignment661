@@ -11,14 +11,93 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  String selectedCourse = "Select a course";
+  String? selectedCourse = "Select a subject code";
   String searchQuery = ""; // Search query string
   late stt.SpeechToText _speech; // Speech-to-text instance
   bool _isListening = false; // Listening state
+  List<String> recentSearches = [];
+  List<Map<String, String>> lecturers = [];
+
+  final List<Map<String, String>> allLecturers = [
+    {
+      "name": "Zawawi bin Ismail@Wahab",
+      "phone": "012-3456789",
+      "room": "101-A"
+    },
+    {
+      "name": "Ahmad Nadzmi bin Fadzal",
+      "phone": "011-2345678",
+      "room": "102-B"
+    },
+    {
+      "name": "Muhammad Atif bin Ramlan",
+      "phone": "013-4567890",
+      "room": "103-C"
+    },
+    {
+      "name": "Siti Nurul Hayatie binti Ishak",
+      "phone": "014-5678901",
+      "room": "104-D"
+    },
+    {
+      "name": "Dr. Najdah binti Abd Aziz",
+      "phone": "015-6789012",
+      "room": "105-E"
+    },
+  ];
+
+  final Map<String, String> imageAssets = {
+    "Zawawi bin Ismail@Wahab": "assets/k.jpg",
+    "Ahmad Nadzmi bin Fadzal": "assets/i.jpg",
+    "Muhammad Atif bin Ramlan": "assets/j.jpg",
+    "Siti Nurul Hayatie binti Ishak": "assets/h.jpg",
+    "Dr. Najdah binti Abd Aziz": "assets/g.jpg",
+  };
+
+  final Map<String, List<Map<String, String>>> lecturersByCourse = {
+    "CSP600": [
+      {
+        "name": "Zawawi bin Ismail@Wahab",
+        "phone": "012-3456789",
+        "room": "101-A"
+      },
+      {
+        "name": "Ahmad Nadzmi bin Fadzal",
+        "phone": "011-2345678",
+        "room": "102-B"
+      },
+      {
+        "name": "Muhammad Atif bin Ramlan",
+        "phone": "013-4567890",
+        "room": "103-C"
+      },
+      {
+        "name": "Siti Nurul Hayatie binti Ishak",
+        "phone": "014-5678901",
+        "room": "104-D"
+      },
+      {
+        "name": "Dr. Najdah binti Abd Aziz",
+        "phone": "015-6789012",
+        "room": "105-E"
+      },
+    ],
+    "CSC661": [
+      {"name": "Wan Amirul Hakim", "phone": "016-7890123", "room": "106-F"},
+      {"name": "Farhan bin Kamarul", "phone": "017-8901234", "room": "107-G"},
+      {"name": "Noraini binti Hamid", "phone": "018-9012345", "room": "108-H"},
+      {
+        "name": "Fazrina binti Mohamad",
+        "phone": "019-0123456",
+        "room": "109-I"
+      },
+    ],
+  };
 
   @override
   void initState() {
     super.initState();
+    lecturers = allLecturers; // Initialize lecturers to include all lecturers
     _speech = stt.SpeechToText(); // Initialize speech-to-text
   }
 
@@ -29,6 +108,7 @@ class _MainPageState extends State<MainPage> {
       _speech.listen(onResult: (val) {
         setState(() {
           searchQuery = val.recognizedWords; // Update search query
+          _filterLecturers();
         });
       });
     }
@@ -39,45 +119,62 @@ class _MainPageState extends State<MainPage> {
     setState(() => _isListening = false);
   }
 
+  void _filterLecturers() {
+    setState(() {
+      lecturers = allLecturers
+          .where((lecturer) => lecturer["name"]!
+              .toLowerCase()
+              .contains(searchQuery.toLowerCase()))
+          .toList();
+
+      if (searchQuery.isNotEmpty && !recentSearches.contains(searchQuery)) {
+        recentSearches.add(searchQuery);
+      }
+    });
+  }
+
+  Widget _buildColoredTitle(String title) {
+    final colors = [
+      Colors.red,
+      Colors.orange,
+      Colors.yellow,
+      Colors.green,
+      Colors.blue,
+      Colors.indigo,
+      Colors.purple
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: title.split('').asMap().entries.map((entry) {
+        final index = entry.key;
+        final letter = entry.value;
+        return Text(
+          letter,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors[index % colors.length],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70), // Increased AppBar height
+        preferredSize: const Size.fromHeight(50),
         child: AppBar(
           backgroundColor: const Color.fromARGB(255, 19, 34, 48),
           elevation: 0,
           automaticallyImplyLeading: false,
-          title: Padding(
-            padding: const EdgeInsets.only(left: 16.0), // Align text left
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    "Welcome, ${widget.userName}",
-                    style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    overflow: TextOverflow.ellipsis, // Handle long names
-                  ),
-                ),
-                const SizedBox(width: 20), // Add space between text and icon
-                const Icon(
-                  Icons.account_circle,
-                  color: Colors.white,
-                  size: 50, // Profile icon size
-                ),
-              ],
-            ),
-          ),
+          title: _buildColoredTitle("LecturerMeet"), // Updated title
         ),
       ),
       body: Container(
-        color:
-            const Color.fromARGB(255, 42, 71, 90), // Updated background color
+        color: const Color.fromARGB(255, 42, 71, 90),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -86,9 +183,15 @@ class _MainPageState extends State<MainPage> {
               padding: const EdgeInsets.all(16.0),
               child: TextField(
                 controller: TextEditingController(text: searchQuery),
-                onChanged: (value) => searchQuery = value,
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                    _filterLecturers();
+                  });
+                },
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 30),
+                  prefixIcon:
+                      const Icon(Icons.search, color: Colors.grey, size: 30),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isListening ? Icons.mic : Icons.mic_none,
@@ -104,7 +207,7 @@ class _MainPageState extends State<MainPage> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                style: const TextStyle(fontSize: 18), // Increased text size
+                style: const TextStyle(fontSize: 18),
               ),
             ),
             // Course dropdown
@@ -112,24 +215,18 @@ class _MainPageState extends State<MainPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: DropdownButtonFormField<String>(
                 value: selectedCourse,
-                items: [
-                  "Select a course",
-                  "CSC110",
-                  "CSC230",
-                  "CSC267",
-                  "CSC264",
-                  "CSC270",
-                ].map((String course) {
+                items: ["Select a subject code", ...lecturersByCourse.keys]
+                    .map((String course) {
                   return DropdownMenuItem(
                     value: course,
-                    child: Text(course,
-                        style: const TextStyle(
-                            fontSize: 18)), // Increased text size
+                    child: Text(course, style: const TextStyle(fontSize: 18)),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
-                    selectedCourse = newValue!;
+                    selectedCourse = newValue;
+                    lecturers = lecturersByCourse[newValue] ?? allLecturers;
+                    searchQuery = "";
                   });
                 },
                 decoration: InputDecoration(
@@ -142,52 +239,82 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: Text(
+                "Recent Search",
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
             // Lecturer cards
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: 3,
+                itemCount: lecturers.length,
                 itemBuilder: (context, index) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          // Picture placeholder
-                          Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.person,
-                                color: Colors.grey, size: 40),
-                          ),
-                          const SizedBox(width: 16),
-                          // Lecturer details
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                "Name: Lecturer Name",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                  final lecturer = lecturers[index];
+                  return GestureDetector(
+                    onTap: () {
+                      if (lecturer['name'] == "Zawawi bin Ismail@Wahab") {
+                        Navigator.pushNamed(context, '/zawawi');
+                      } else if (lecturer['name'] ==
+                          "Ahmad Nadzmi bin Fadzal") {
+                        Navigator.pushNamed(context, '/ahmad');
+                      } else if (lecturer['name'] ==
+                          "Muhammad Atif bin Ramlan") {
+                        Navigator.pushNamed(context, '/atif');
+                      }
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.only(bottom: 10.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          children: [
+                            // Picture placeholder
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              Text("Phone: 012-3456789",
-                                  style: TextStyle(fontSize: 16)),
-                              Text("Room No: 123-A",
-                                  style: TextStyle(fontSize: 16)),
-                            ],
-                          ),
-                        ],
+                              child: imageAssets.containsKey(lecturer['name'])
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.asset(
+                                        imageAssets[lecturer['name']]!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Icon(Icons.person,
+                                      color: Colors.grey, size: 30),
+                            ),
+                            const SizedBox(width: 10),
+                            // Lecturer details
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  lecturer['name']!,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text("Phone: ${lecturer['phone']}",
+                                    style: const TextStyle(fontSize: 14)),
+                                Text("Room No: ${lecturer['room']}",
+                                    style: const TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -216,8 +343,7 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
         onTap: (index) {
-          // Handle navigation between tabs
-          print("Selected tab: $index");
+          debugPrint("Selected tab: $index");
         },
       ),
     );

@@ -1,5 +1,6 @@
 name: assignment661
 description: "A new Flutter project."
+
 # Prevent accidental publishing to pub.dev
 publish_to: 'none'
 
@@ -15,11 +16,12 @@ dependencies:
   fluttertoast: ^8.2.1
   firebase_auth: ^5.3.3
   firebase_core: ^3.8.0
+  cloud_firestore: ^5.6.0
   cupertino_icons: ^1.0.2
   image_picker: ^0.8.7+4 # Use the latest compatible version
   speech_to_text: ^7.0.0
-  intl: ^0.18.0 
-  cloud_firestore: ^5.6.0
+  intl: ^0.18.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -27,7 +29,21 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Ensure the assets directory is properly included
   assets:
+    - assets/d.jpg
+    - assets/e.jpg
     - assets/a.png
     - assets/b.png
     - assets/c.png
+    - assets/f.jpg
+    - assets/g.jpg
+    - assets/h.jpg
+    - assets/i.jpg
+    - assets/j.jpg
+    - assets/k.jpg
+    - assets/l.jpg
+    - assets/m.jpg
+    - assets/n.jpg
+    
