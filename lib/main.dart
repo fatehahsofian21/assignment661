@@ -6,10 +6,11 @@ import 'mainpage.dart'; // Import mainpage.dart
 import 'zawawi.dart'; // Import zawawi.dart
 import 'atif.dart'; // Import atif.dart
 import 'ahmad.dart'; // Import ahmad.dart
+import 'success.dart'; // Import success.dart
+import 'dashboard.dart'; // Import dashboard.dart
 
 void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Ensure proper initialization for Firebase
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure proper initialization for Firebase
   try {
     await Firebase.initializeApp(); // Initialize Firebase
   } catch (e) {
@@ -40,6 +41,9 @@ class MyApp extends StatelessWidget {
         '/zawawi': (context) => const ZawawiPage(), // Route for zawawi.dart
         '/atif': (context) => const AtifPage(), // Route for atif.dart
         '/ahmad': (context) => const AhmadPage(), // Route for ahmad.dart
+        '/success': (context) => const SuccessPage(), // Add the success route
+        '/dashboard': (context) =>
+            const DashboardPage(userName: 'User'), // Add the DashboardPage route
       },
     );
   }
