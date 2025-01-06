@@ -1,224 +1,335 @@
 import 'package:flutter/material.dart';
-import 'signup.dart'; // Import the signup page
-import 'mainpage.dart'; // Import the main page
-import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
-import 'package:fluttertoast/fluttertoast.dart'; // For popup messages
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'mainpage.dart'; // Import your MainPage
+import 'signup.dart'; // Import your Signup Screen
 
-class LoginPage2 extends StatelessWidget {
+class LoginPage2 extends StatefulWidget {
   const LoginPage2({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    TextEditingController emailController = TextEditingController();
-    TextEditingController passwordController = TextEditingController();
+  LoginPage2State createState() => LoginPage2State();
+}
 
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: const Color(0xFFFFF5E1), // Cream color background
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Image or Illustration
-              Center(
-                child: Image.asset(
-                  'assets/b.png', // Replace with your illustration asset
-                  width: 300, // Increased width
-                  height: 300, // Increased height
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Login Title
-              const Text(
-                "Login",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              // Subtitle
-              const Text(
-                "Please LogIn to continue.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
-              // Email Field
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: const Icon(Icons.email),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Password Field
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: const Icon(Icons.visibility_off),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Forgot Password Link
-              Align(
-                alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: () {
-                    Fluttertoast.showToast(
-                      msg: "Forgot Password tapped!",
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.CENTER,
-                      backgroundColor: Colors.blueGrey,
-                      textColor: Colors.white,
-                    );
-                  },
-                  child: const Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Sign In Button
-              GestureDetector(
-                onTap: () async {
-                  String email = emailController.text.trim();
-                  String password = passwordController.text.trim();
+class LoginPage2State extends State<LoginPage2> {
+  String email = "";
+  String password = "";
+  String userType = "Student"; // Default selected user type
+  bool isPasswordVisible = false; // Manage password visibility
 
-                  if (email.isEmpty || password.isEmpty) {
-                    Fluttertoast.showToast(
-                      msg: "Please enter your email and password.",
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.CENTER,
-                      backgroundColor: Colors.red,
-                      textColor: Colors.white,
-                    );
-                  } else {
-                    try {
-                      // Attempt to log in with FirebaseAuth
-                      UserCredential userCredential = await FirebaseAuth
-                          .instance
-                          .signInWithEmailAndPassword(
-                        email: email,
-                        password: password,
-                      );
+  Future<void> login(BuildContext context) async {
+    if (email.isEmpty || password.isEmpty) {
+      // Show error if email or password is empty
+      Fluttertoast.showToast(
+        msg: "Please enter your email and password.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } else {
+      try {
+        // Attempt to log in with FirebaseAuth
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
 
-                      // Extract userName from email
-                      String userName = email.split('@')[0];
+        // Extract userName from email
+        String userName = email.split('@')[0];
 
-                      // Navigate to main page on success
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MainPage(userName: userName),
-                        ),
-                      );
-                    } on FirebaseAuthException catch (e) {
-                      // Handle FirebaseAuth errors
-                      if (e.code == 'user-not-found') {
-                        Fluttertoast.showToast(
-                          msg: "No user found for that email.",
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.CENTER,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
-                        );
-                      } else if (e.code == 'wrong-password') {
-                        Fluttertoast.showToast(
-                          msg: "Incorrect password. Please try again.",
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.CENTER,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
-                        );
-                      } else {
-                        Fluttertoast.showToast(
-                          msg: "Error: ${e.message}",
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.CENTER,
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
-                        );
-                      }
-                    } catch (e) {
-                      // Generic error handling
-                      Fluttertoast.showToast(
-                        msg: "Error: $e",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.CENTER,
-                        backgroundColor: Colors.red,
-                        textColor: Colors.white,
-                      );
-                    }
-                  }
-                },
-                child: const Center(
-                  child: Text(
-                    "LogIn",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Sign Up Text
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Don't have an account? "),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SignupPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      "Sign Up",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+        // Navigate to main page on success
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainPage(userName: userName),
           ),
-        ),
+        );
+      } on FirebaseAuthException catch (e) {
+        // Handle FirebaseAuth errors
+        if (e.code == 'user-not-found') {
+          Fluttertoast.showToast(
+            msg: "No user found for that email. Please sign up first.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+
+          // Navigate to SignupScreen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SignupPage(),
+            ),
+          );
+        } else if (e.code == 'wrong-password') {
+          Fluttertoast.showToast(
+            msg: "Incorrect password. Please try again.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: "Error: ${e.message}",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
+      } catch (e) {
+        // Generic error handling
+        Fluttertoast.showToast(
+          msg: "An unexpected error occurred. Please try again later.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          Container(
+            color: const Color.fromARGB(255, 17, 33, 41), // Background color
+          ),
+          CustomPaint(
+            painter: UpperCurvePainter(),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.35,
+            ),
+          ),
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      SizedBox(height: 70),
+                      Text(
+                        'Welcome to',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'LecturerMeet!',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 40),
+                      const Text(
+                        'LOGIN',
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // User Type Selection
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Radio<String>(
+                                value: "Student",
+                                activeColor:
+                                    const Color.fromARGB(255, 221, 186, 140),
+                                groupValue: userType,
+                                onChanged: (value) {
+                                  setState(() {
+                                    userType = value!;
+                                  });
+                                },
+                              ),
+                              const Text(
+                                "Student",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 40),
+                          Row(
+                            children: [
+                              Radio<String>(
+                                value: "Lecturer",
+                                activeColor:
+                                    const Color.fromARGB(255, 221, 186, 140),
+                                groupValue: userType,
+                                onChanged: (value) {
+                                  setState(() {
+                                    userType = value!;
+                                  });
+                                },
+                              ),
+                              const Text(
+                                "Lecturer",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Email TextField
+                      TextField(
+                        onChanged: (value) => email = value,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          labelStyle: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white24,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+                      // Password TextField
+                      TextField(
+                        onChanged: (value) => password = value,
+                        obscureText: !isPasswordVisible,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          labelStyle: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white24,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              isPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                isPasswordVisible = !isPasswordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 30),
+                      // Login Button
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () => login(context),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(200, 40),
+                            backgroundColor:
+                                const Color.fromARGB(255, 221, 186, 140),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'LOGIN',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Register Sentence
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Don't have an account? ",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignupPage(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Register',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 221, 186, 140),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
+  }
+}
+
+class UpperCurvePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint paint = Paint()
+      ..color = const Color.fromARGB(255, 24, 71, 95)
+      ..style = PaintingStyle.fill;
+
+    Path path = Path();
+    path.moveTo(0, size.height * 0.75);
+    path.quadraticBezierTo(
+        size.width * 0.5, size.height * 0.5, size.width, size.height * 0.75);
+    path.lineTo(size.width, 0);
+    path.lineTo(0, 0);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
   }
 }

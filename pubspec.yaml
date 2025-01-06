@@ -17,8 +17,7 @@ dependencies:
   firebase_core: ^3.8.0
   cupertino_icons: ^1.0.2
   image_picker: ^0.8.7+4 # Use the latest compatible version
-  timezone: ^0.9.0
-
+  speech_to_text: ^7.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -27,6 +26,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/a.jpeg
+    - assets/a.png
     - assets/b.png
     - assets/c.png
