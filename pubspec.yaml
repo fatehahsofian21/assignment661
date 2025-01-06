@@ -22,6 +22,7 @@ dependencies:
   speech_to_text: ^7.0.0
   intl: ^0.18.0
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -46,4 +47,4 @@ flutter:
     - assets/l.jpg
     - assets/m.jpg
     - assets/n.jpg
-    
+    - assets/p.jpg

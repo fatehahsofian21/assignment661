@@ -1,4 +1,7 @@
 buildscript {
+    ext {
+        kotlin_version = "1.8.10" // Ensure Kotlin version matches your Gradle plugin
+    }
     repositories {
         google()
         mavenCentral()

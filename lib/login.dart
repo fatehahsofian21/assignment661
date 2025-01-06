@@ -20,7 +20,7 @@ class SplashScreen extends StatelessWidget {
             child: CircleAvatar(
               radius: 60,
               backgroundColor: Colors.blue[200],
-              child: Icon(Icons.computer, size: 40, color: Colors.blue),
+              child: const Icon(Icons.computer, size: 40, color: Colors.blue),
             ),
           ),
           Positioned(
@@ -29,10 +29,10 @@ class SplashScreen extends StatelessWidget {
             child: CircleAvatar(
               radius: 50,
               backgroundColor: Colors.green[200],
-              child: Icon(Icons.book, size: 40, color: Colors.green),
+              child: const Icon(Icons.book, size: 40, color: Colors.green),
             ),
           ),
-          Positioned(
+          const Positioned(
             bottom: 200,
             left: 10,
             child: CircleAvatar(
@@ -47,7 +47,7 @@ class SplashScreen extends StatelessWidget {
             child: CircleAvatar(
               radius: 30,
               backgroundColor: Colors.purple[100],
-              child: Icon(Icons.phone_android, size: 25, color: Colors.purple),
+              child: const Icon(Icons.phone_android, size: 25, color: Colors.purple),
             ),
           ),
           // Main content
@@ -90,7 +90,7 @@ class SplashScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) =>LoginPage2()),
+                      MaterialPageRoute(builder: (context) =>const LoginPage2()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -118,8 +118,8 @@ class SplashScreen extends StatelessWidget {
 }
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: const SplashScreen(),
+    home: SplashScreen(),
   ));
 }
