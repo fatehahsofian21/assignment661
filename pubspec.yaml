@@ -18,6 +18,8 @@ dependencies:
   cupertino_icons: ^1.0.2
   image_picker: ^0.8.7+4 # Use the latest compatible version
   speech_to_text: ^7.0.0
+  intl: ^0.18.0 
+  cloud_firestore: ^5.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

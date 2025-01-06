@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'mainpage.dart'; // Import your MainPage
-import 'signup.dart'; // Import your Signup Screen
+import 'dashboard.dart'; // Import DashboardPage
+import 'signup.dart'; // Import SignupPage
 
 class LoginPage2 extends StatefulWidget {
   const LoginPage2({super.key});
@@ -39,11 +39,21 @@ class LoginPage2State extends State<LoginPage2> {
         // Extract userName from email
         String userName = email.split('@')[0];
 
-        // Navigate to main page on success
+        // Show success toast
+        Fluttertoast.showToast(
+          msg: "Login successful!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+
+        // Navigate to DashboardPage on success, passing userName
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => MainPage(userName: userName),
+            builder: (context) =>
+                DashboardPage(userName: userName), // Pass userName
           ),
         );
       } on FirebaseAuthException catch (e) {
@@ -57,7 +67,7 @@ class LoginPage2State extends State<LoginPage2> {
             textColor: Colors.white,
           );
 
-          // Navigate to SignupScreen
+          // Navigate to SignupPage
           Navigator.push(
             context,
             MaterialPageRoute(
