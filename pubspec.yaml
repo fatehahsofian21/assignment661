@@ -18,15 +18,18 @@ dependencies:
   firebase_core: ^3.8.0
   cloud_firestore: ^5.6.0
   cupertino_icons: ^1.0.2
-  image_picker: ^0.8.7+4 # Use the latest compatible version
+  image_picker: ^0.8.7+4
   speech_to_text: ^7.0.0
   intl: ^0.18.0
-
+  google_maps_flutter: ^2.2.0  # Keep only one instance of this dependency
+  firebase_storage: ^12.3.7
+  geolocator: ^10.0.1
+  permission_handler: ^10.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0 # Updated for compatibility with Flutter 3
+  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true
@@ -48,3 +51,4 @@ flutter:
     - assets/m.jpg
     - assets/n.jpg
     - assets/p.png
+    - assets/q.jpg

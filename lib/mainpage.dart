@@ -133,6 +133,16 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void _sortLecturers(String order) {
+    setState(() {
+      if (order == "A-Z") {
+        lecturers.sort((a, b) => a["name"]!.compareTo(b["name"]!));
+      } else if (order == "Z-A") {
+        lecturers.sort((a, b) => b["name"]!.compareTo(a["name"]!));
+      }
+    });
+  }
+
   Widget _buildColoredTitle(String title) {
     final colors = [
       Colors.red,
@@ -239,11 +249,47 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-              child: Text(
-                "Recent Search",
-                style: TextStyle(fontSize: 18, color: Colors.white),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Recent Search",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.sort, color: Colors.white),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.arrow_upward),
+                                title: const Text("Sort A-Z"),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _sortLecturers("A-Z");
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.arrow_downward),
+                                title: const Text("Sort Z-A"),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _sortLecturers("Z-A");
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
             // Lecturer cards
@@ -257,11 +303,9 @@ class _MainPageState extends State<MainPage> {
                     onTap: () {
                       if (lecturer['name'] == "Zawawi bin Ismail@Wahab") {
                         Navigator.pushNamed(context, '/zawawi');
-                      } else if (lecturer['name'] ==
-                          "Ahmad Nadzmi bin Fadzal") {
+                      } else if (lecturer['name'] == "Ahmad Nadzmi bin Fadzal") {
                         Navigator.pushNamed(context, '/ahmad');
-                      } else if (lecturer['name'] ==
-                          "Muhammad Atif bin Ramlan") {
+                      } else if (lecturer['name'] == "Muhammad Atif bin Ramlan") {
                         Navigator.pushNamed(context, '/atif');
                       }
                     },

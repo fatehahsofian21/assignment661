@@ -1,22 +1,32 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'login.dart'; // Import the login.dart file
-import 'login2.dart'; // Import login2.dart
-import 'mainpage.dart'; // Import mainpage.dart
-import 'zawawi.dart'; // Import zawawi.dart
-import 'atif.dart'; // Import atif.dart
-import 'ahmad.dart'; // Import ahmad.dart
-import 'success.dart'; // Import success.dart
-import 'dashboard.dart'; // Import dashboard.dart
+import 'package:permission_handler/permission_handler.dart'; // Add this
+import 'login.dart';
+import 'login2.dart';
+import 'mainpage.dart';
+import 'zawawi.dart';
+import 'atif.dart';
+import 'ahmad.dart';
+import 'success.dart';
+import 'dashboard.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure proper initialization for Firebase
+  WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp(); // Initialize Firebase
+    await Firebase.initializeApp();
+    await requestLocationPermission(); // Request location permission
   } catch (e) {
-    debugPrint("Error initializing Firebase: $e");
+    debugPrint("Error initializing Firebase or permissions: $e");
   }
   runApp(const MyApp());
+}
+
+Future<void> requestLocationPermission() async {
+  if (await Permission.location.request().isGranted) {
+    print("Location permission granted.");
+  } else {
+    print("Location permission denied.");
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -25,25 +35,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Remove the debug banner
-      title: 'LecturerMeet', // Update app name here if needed
+      debugShowCheckedModeBanner: false,
+      title: 'LecturerMeet',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      // Set a valid initial route
       initialRoute: '/login',
       routes: {
-        '/login': (context) => const SplashScreen(), // Route for login.dart
-        '/login2': (context) => const LoginPage2(), // Route for login2.dart
-        '/mainpage': (context) =>
-            const MainPage(userName: 'User'), // Route for mainpage.dart
-        '/zawawi': (context) => const ZawawiPage(), // Route for zawawi.dart
-        '/atif': (context) => const AtifPage(), // Route for atif.dart
-        '/ahmad': (context) => const AhmadPage(), // Route for ahmad.dart
-        '/success': (context) => const SuccessPage(), // Add the success route
-        '/dashboard': (context) =>
-            const DashboardPage(userName: 'User'), // Add the DashboardPage route
+        '/login': (context) => const SplashScreen(),
+        '/login2': (context) => const LoginPage2(),
+        '/mainpage': (context) => const MainPage(userName: 'User'),
+        '/zawawi': (context) => const ZawawiPage(),
+        '/atif': (context) => const AtifPage(),
+        '/ahmad': (context) => const AhmadPage(),
+        '/success': (context) => const SuccessPage(),
+        '/dashboard': (context) => const DashboardPage(userName: 'User'),
       },
     );
   }
