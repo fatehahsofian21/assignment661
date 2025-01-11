@@ -143,44 +143,25 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  Widget _buildColoredTitle(String title) {
-    final colors = [
-      Colors.red,
-      Colors.orange,
-      Colors.yellow,
-      Colors.green,
-      Colors.blue,
-      Colors.indigo,
-      Colors.purple
-    ];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: title.split('').asMap().entries.map((entry) {
-        final index = entry.key;
-        final letter = entry.value;
-        return Text(
-          letter,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: colors[index % colors.length],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: AppBar(
-          backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          title: _buildColoredTitle("LecturerMeet"), // Updated title
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 19, 34, 48),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              Navigator.pushReplacementNamed(context, '/dashboard'),
+        ),
+        centerTitle: true, // Ensures title is centered
+        title: const Text(
+          "LecturerMeet",
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       ),
       body: Container(
@@ -250,7 +231,8 @@ class _MainPageState extends State<MainPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -303,9 +285,11 @@ class _MainPageState extends State<MainPage> {
                     onTap: () {
                       if (lecturer['name'] == "Zawawi bin Ismail@Wahab") {
                         Navigator.pushNamed(context, '/zawawi');
-                      } else if (lecturer['name'] == "Ahmad Nadzmi bin Fadzal") {
-                        Navigator.pushNamed(context, '/ahmad');
-                      } else if (lecturer['name'] == "Muhammad Atif bin Ramlan") {
+                      } else if (lecturer['name'] ==
+                          "Ahmad Nadzmi bin Fadzal") {
+                        Navigator.pushNamed(context, '/upcoming');
+                      } else if (lecturer['name'] ==
+                          "Muhammad Atif bin Ramlan") {
                         Navigator.pushNamed(context, '/atif');
                       }
                     },
@@ -367,28 +351,6 @@ class _MainPageState extends State<MainPage> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-        selectedItemColor: const Color.fromARGB(255, 75, 153, 193),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle),
-            label: "My Booking",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "My Account",
-          ),
-        ],
-        onTap: (index) {
-          debugPrint("Selected tab: $index");
-        },
       ),
     );
   }

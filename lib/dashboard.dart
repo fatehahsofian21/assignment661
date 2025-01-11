@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'profileS.dart';
 
 class DashboardPage extends StatefulWidget {
   final String userName;
@@ -307,9 +308,29 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
         backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-        selectedItemColor: Colors.white,
+        selectedItemColor: const Color.fromARGB(255, 75, 153, 193),
         unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DashboardPage(userName: widget.userName),
+              ),
+            );
+          } else if (index == 1) {
+            Navigator.pushNamed(context, '/booking');
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfileSPage(),
+              ),
+            );
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

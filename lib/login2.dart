@@ -3,6 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard.dart'; // Import DashboardPage
 import 'signup.dart'; // Import SignupPage
+import 'mainpageL.dart'; // Import MainPageL for lecturers
 
 class LoginPage2 extends StatefulWidget {
   const LoginPage2({super.key});
@@ -48,14 +49,30 @@ class LoginPage2State extends State<LoginPage2> {
           textColor: Colors.white,
         );
 
-        // Navigate to DashboardPage on success, passing userName
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DashboardPage(userName: userName), // Pass userName
-          ),
-        );
+        // Navigate based on user type and password length
+        if (userType == "Lecturer" && password.length == 7) {
+          // Navigate to MainPageL for lecturers
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainPageL()),
+          );
+        } else if (userType == "Student") {
+          // Navigate to DashboardPage for students
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DashboardPage(userName: userName),
+            ),
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: "Invalid login details for the selected user type.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
       } on FirebaseAuthException catch (e) {
         // Handle FirebaseAuth errors
         if (e.code == 'user-not-found') {
@@ -70,9 +87,7 @@ class LoginPage2State extends State<LoginPage2> {
           // Navigate to SignupPage
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const SignupPage(),
-            ),
+            MaterialPageRoute(builder: (context) => const SignupPage()),
           );
         } else if (e.code == 'wrong-password') {
           Fluttertoast.showToast(

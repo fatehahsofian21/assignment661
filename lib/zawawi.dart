@@ -63,6 +63,18 @@ class _ZawawiPageState extends State<ZawawiPage> {
 
   Future<void> _uploadBookingData() async {
     try {
+      if (selectedDate == null || selectedTime == null ||
+          (selectedVenue == "Other" && otherVenueController.text.isEmpty) ||
+          remarkController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please fill in all required information!"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       Map<String, dynamic> bookingData = {
         'bookingDate': selectedDate != null ? selectedDate!.toIso8601String() : null,
         'bookingTime': selectedTime,
@@ -79,11 +91,7 @@ class _ZawawiPageState extends State<ZawawiPage> {
         bookingData['photoUrl'] = photoUrl;
       }
 
-      await firestore
-          .collection('events')
-          .doc('1-2025')
-          .collection('bookings')
-          .add(bookingData);
+      await firestore.collection('bookings').add(bookingData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -113,7 +121,7 @@ class _ZawawiPageState extends State<ZawawiPage> {
           content: ClipRRect(
             borderRadius: BorderRadius.circular(15),
             child: Image.asset(
-              'assets/q.jpg', // Replace with the correct path to your asset
+              'assets/q.jpg',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return const Center(
@@ -127,7 +135,7 @@ class _ZawawiPageState extends State<ZawawiPage> {
     );
   }
 
-  void _showConfirmationDialog() {
+ void _showConfirmationDialog() {
   if (selectedDate == null ||
       selectedTime == null ||
       (selectedVenue == "Other" && otherVenueController.text.isEmpty) ||
@@ -154,16 +162,16 @@ class _ZawawiPageState extends State<ZawawiPage> {
         TextButton(
           onPressed: () async {
             // Save the current context
-            final navigator = Navigator.of(context);
+            final navigatorContext = Navigator.of(context);
 
             // Close the dialog
-            navigator.pop();
+            Navigator.pop(context);
 
             // Upload booking data
             await _uploadBookingData();
 
             // Navigate to success page
-            navigator.pushNamed('/success');
+            navigatorContext.pushNamed('/success');
           },
           child: const Text('Yes'),
         ),
@@ -172,34 +180,14 @@ class _ZawawiPageState extends State<ZawawiPage> {
   );
 }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: AppBar(
-          backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pushNamed(context, '/mainpage'),
-              ),
-              Text(
-                "LecturerMeet",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
-          ),
-        ),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 19, 34, 48),
+        elevation: 0,
+        title: const Text("Zawawi Booking", style: TextStyle(color: Colors.white)),
       ),
       body: Container(
         color: const Color.fromARGB(255, 42, 71, 90),
@@ -279,7 +267,7 @@ class _ZawawiPageState extends State<ZawawiPage> {
                   ),
                 ],
               ),
-                            const SizedBox(height: 16),
+              const SizedBox(height: 16),
               const Text(
                 "Booking Date",
                 style: TextStyle(
@@ -524,31 +512,6 @@ class _ZawawiPageState extends State<ZawawiPage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-        selectedItemColor: const Color.fromARGB(255, 75, 153, 193),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle),
-            label: "My Booking",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "My Account",
-          ),
-        ],
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushNamed(context, '/mainpage');
-          }
-        },
-      ),
     );
   }
 }
-
