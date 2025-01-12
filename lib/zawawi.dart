@@ -4,6 +4,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'roomZ.dart';
+import 'dart:typed_data';
+import 'package:image/image.dart' as img;
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:firebase_auth/firebase_auth.dart';
+
+Widget displayImage(String base64String) {
+  Uint8List bytes = base64Decode(base64String);
+  return Image.memory(bytes, fit: BoxFit.cover);
+}
 
 class ZawawiPage extends StatefulWidget {
   const ZawawiPage({super.key});
@@ -63,7 +73,8 @@ class _ZawawiPageState extends State<ZawawiPage> {
 
   Future<void> _uploadBookingData() async {
     try {
-      if (selectedDate == null || selectedTime == null ||
+      if (selectedDate == null ||
+          selectedTime == null ||
           (selectedVenue == "Other" && otherVenueController.text.isEmpty) ||
           remarkController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,22 +86,60 @@ class _ZawawiPageState extends State<ZawawiPage> {
         return;
       }
 
+      // Get the currently logged-in user's UID and email
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("User not logged in!"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      final userId = user.uid;
+      final email = user.email ?? "unknown@domain.com";
+      final username = email.split('@')[0]; // Extract part before "@"
+
+      // Prepare booking data
       Map<String, dynamic> bookingData = {
-        'bookingDate': selectedDate != null ? selectedDate!.toIso8601String() : null,
+        'userId': userId, // Add the userId field
+        'username': username, // Add username
+        'bookingDate': selectedDate?.toIso8601String(),
         'bookingTime': selectedTime,
-        'venue': selectedVenue == "Other" ? otherVenueController.text : selectedVenue,
+        'venue': selectedVenue == "Other"
+            ? otherVenueController.text
+            : selectedVenue,
         'remark': remarkController.text,
         'timestamp': FieldValue.serverTimestamp(),
       };
 
       if (selectedImage != null) {
-        String fileName = 'bookings/${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final firebaseStorage = FirebaseStorage.instance;
-        final uploadTask = await firebaseStorage.ref(fileName).putFile(selectedImage!);
-        String photoUrl = await uploadTask.ref.getDownloadURL();
-        bookingData['photoUrl'] = photoUrl;
+        // Read the image as bytes
+        final imageBytes = await selectedImage!.readAsBytes();
+
+        // Decode the image using `image` package
+        final img.Image? originalImage = img.decodeImage(imageBytes);
+        if (originalImage != null) {
+          // Resize and compress the image
+          final img.Image resizedImage = img.copyResize(
+            originalImage,
+            width: 800, // Set your desired width
+            height: 600, // Set your desired height (optional)
+          );
+
+          // Encode the image as JPEG with quality
+          final Uint8List compressedBytes = Uint8List.fromList(
+            img.encodeJpg(resizedImage, quality: 70), // Set quality (1-100)
+          );
+
+          // Convert the compressed image bytes to a base64 string for uploading
+          final String base64Image = base64Encode(compressedBytes);
+          bookingData['photoBase64'] = base64Image;
+        }
       }
 
+      // Store booking data in Firestore
       await firestore.collection('bookings').add(bookingData);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,51 +184,51 @@ class _ZawawiPageState extends State<ZawawiPage> {
     );
   }
 
- void _showConfirmationDialog() {
-  if (selectedDate == null ||
-      selectedTime == null ||
-      (selectedVenue == "Other" && otherVenueController.text.isEmpty) ||
-      remarkController.text.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Please fill in all required information before confirming."),
-        backgroundColor: Colors.red,
+  void _showConfirmationDialog() {
+    if (selectedDate == null ||
+        selectedTime == null ||
+        (selectedVenue == "Other" && otherVenueController.text.isEmpty) ||
+        remarkController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Please fill in all required information before confirming."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Booking'),
+        content: const Text('Are you sure you want to confirm this booking?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Save the current context
+              final navigatorContext = Navigator.of(context);
+
+              // Close the dialog
+              Navigator.pop(context);
+
+              // Upload booking data
+              await _uploadBookingData();
+
+              // Navigate to success page
+              navigatorContext.pushNamed('/success');
+            },
+            child: const Text('Yes'),
+          ),
+        ],
       ),
     );
-    return;
   }
-
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Confirm Booking'),
-      content: const Text('Are you sure you want to confirm this booking?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () async {
-            // Save the current context
-            final navigatorContext = Navigator.of(context);
-
-            // Close the dialog
-            Navigator.pop(context);
-
-            // Upload booking data
-            await _uploadBookingData();
-
-            // Navigate to success page
-            navigatorContext.pushNamed('/success');
-          },
-          child: const Text('Yes'),
-        ),
-      ],
-    ),
-  );
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +236,8 @@ class _ZawawiPageState extends State<ZawawiPage> {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 19, 34, 48),
         elevation: 0,
-        title: const Text("Zawawi Booking", style: TextStyle(color: Colors.white)),
+        title:
+            const Text("Zawawi Booking", style: TextStyle(color: Colors.white)),
       ),
       body: Container(
         color: const Color.fromARGB(255, 42, 71, 90),
@@ -293,7 +343,8 @@ class _ZawawiPageState extends State<ZawawiPage> {
                         selectedDate != null
                             ? "${selectedDate!.toLocal()}".split(' ')[0]
                             : "Select Date",
-                        style: const TextStyle(fontSize: 16, color: Colors.white),
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                   ),
@@ -343,7 +394,8 @@ class _ZawawiPageState extends State<ZawawiPage> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: slot['available'] ? Colors.green : Colors.red,
+                            color:
+                                slot['available'] ? Colors.green : Colors.red,
                             border: Border.all(
                               color: selectedTime == slot['time'] &&
                                       slot['available']
@@ -356,8 +408,9 @@ class _ZawawiPageState extends State<ZawawiPage> {
                           child: Text(
                             slot['time'],
                             style: TextStyle(
-                              color:
-                                  slot['available'] ? Colors.black : Colors.white,
+                              color: slot['available']
+                                  ? Colors.black
+                                  : Colors.white,
                               fontSize: 12,
                             ),
                           ),

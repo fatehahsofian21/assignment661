@@ -3,7 +3,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard.dart'; // Import DashboardPage
 import 'signup.dart'; // Import SignupPage
-import 'mainpageL.dart'; // Import MainPageL for lecturers
 
 class LoginPage2 extends StatefulWidget {
   const LoginPage2({super.key});
@@ -15,7 +14,7 @@ class LoginPage2 extends StatefulWidget {
 class LoginPage2State extends State<LoginPage2> {
   String email = "";
   String password = "";
-  String userType = "Student"; // Default selected user type
+  String userType = "Lecturer"; // Default selected user type
   bool isPasswordVisible = false; // Manage password visibility
 
   Future<void> login(BuildContext context) async {
@@ -37,7 +36,7 @@ class LoginPage2State extends State<LoginPage2> {
           password: password,
         );
 
-        // Extract username from email (before "@")
+        // Extract userName from email
         String userName = email.split('@')[0];
 
         // Show success toast
@@ -49,34 +48,14 @@ class LoginPage2State extends State<LoginPage2> {
           textColor: Colors.white,
         );
 
-        // Navigate based on user type and password length
-        if (userType == "Lecturer" && password.length == 7) {
-          // Navigate to MainPageL for lecturers
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MainPageL(
-                email: email,
-              ),
-            ),
-          );
-        } else if (userType == "Student") {
-          // Navigate to DashboardPage for students
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DashboardPage(userName: userName),
-            ),
-          );
-        } else {
-          Fluttertoast.showToast(
-            msg: "Invalid login details for the selected user type.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        }
+        // Navigate to DashboardPage on success, passing userName
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DashboardPage(userName: userName), // Pass userName
+          ),
+        );
       } on FirebaseAuthException catch (e) {
         // Handle FirebaseAuth errors
         if (e.code == 'user-not-found') {
@@ -91,7 +70,9 @@ class LoginPage2State extends State<LoginPage2> {
           // Navigate to SignupPage
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const SignupPage()),
+            MaterialPageRoute(
+              builder: (context) => const SignupPage(),
+            ),
           );
         } else if (e.code == 'wrong-password') {
           Fluttertoast.showToast(
@@ -228,24 +209,23 @@ class LoginPage2State extends State<LoginPage2> {
                         ],
                       ),
                       const SizedBox(height: 20),
- // Email TextField with dynamic hint text based on user type
-TextField(
-  onChanged: (value) => email = value,
-  decoration: InputDecoration(
-    labelText: userType == "Student" ? "Student's Email" : "Lecturer's Email",
-    labelStyle: const TextStyle(
-      fontSize: 16,
-      color: Colors.white,
-    ),
-    filled: true,
-    fillColor: Colors.white24,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-  ),
-  style: const TextStyle(color: Colors.white),
-),
-
+                      // Email TextField
+                      TextField(
+                        onChanged: (value) => email = value,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          labelStyle: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white24,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
                       const SizedBox(height: 10),
                       // Password TextField
                       TextField(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'profileS.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashboardPage extends StatefulWidget {
   final String userName;
@@ -13,6 +14,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  String? userName;
   final Map<int, String> months = {
     1: 'January',
     2: 'February',
@@ -40,25 +42,64 @@ class _DashboardPageState extends State<DashboardPage> {
     Colors.teal.shade100,
     Colors.red.shade100,
   ];
+  bool isLoading = true;
+  String? firestoreName;
 
   @override
   void initState() {
     super.initState();
-    fetchNotes();
+    fetchUserNameFromFirestore();
+    fetchNotes().then((_) {
+      setState(() {
+        isLoading = false;
+      });
+    });
+  }
+
+  void fetchUserNameFromFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        setState(() {
+          firestoreName = doc.data()?['name']?.split(' ')[0] ?? "User";
+        });
+      } catch (e) {
+        debugPrint("Error fetching name: $e");
+      }
+    }
   }
 
   Future<void> fetchNotes() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception("User not logged in");
+      }
+
+      final userId = user.uid;
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
           .collection('events')
-          .doc('${selectedDate.month}-${selectedDate.year}')
           .get();
 
-      if (snapshot.exists) {
-        final data = snapshot.data() as Map<String, dynamic>;
+      if (querySnapshot.docs.isNotEmpty) {
         setState(() {
-          notes = data
-              .map((key, value) => MapEntry(int.parse(key), value.toString()));
+          notes = {};
+          for (var doc in querySnapshot.docs) {
+            final data = doc.data();
+            final day = int.tryParse(data['day']?.toString() ?? '');
+            final note = data['note']?.toString() ?? '';
+
+            if (day != null && note.isNotEmpty) {
+              notes[day] = note;
+            }
+          }
         });
       }
     } catch (e) {
@@ -68,17 +109,24 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> addOrUpdateNoteInFirestore(int day, String note) async {
     try {
-      final docRef = FirebaseFirestore.instance
-          .collection('events')
-          .doc('${selectedDate.month}-${selectedDate.year}');
-
-      final snapshot = await docRef.get();
-
-      if (snapshot.exists) {
-        await docRef.update({'$day': note});
-      } else {
-        await docRef.set({'$day': note});
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception("User not logged in");
       }
+
+      final userId = user.uid;
+      final eventDoc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('events')
+          .doc('$day-${selectedDate.month}-${selectedDate.year}');
+
+      await eventDoc.set({
+        'day': day,
+        'month': selectedDate.month,
+        'year': selectedDate.year,
+        'note': note,
+      });
 
       setState(() {
         notes[day] = note;
@@ -118,33 +166,31 @@ class _DashboardPageState extends State<DashboardPage> {
 
     if (confirm == true) {
       try {
-        final docRef = FirebaseFirestore.instance
-            .collection('events')
-            .doc('${selectedDate.month}-${selectedDate.year}');
-
-        final snapshot = await docRef.get();
-
-        if (snapshot.exists) {
-          final data = snapshot.data() as Map<String, dynamic>;
-          data.remove('$day');
-          if (data.isEmpty) {
-            await docRef.delete();
-          } else {
-            await docRef.set(data);
-          }
-
-          setState(() {
-            notes.remove(day);
-          });
-
-          Fluttertoast.showToast(
-            msg: "Event successfully deleted",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: Colors.green,
-            textColor: Colors.white,
-          );
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          throw Exception("User not logged in");
         }
+
+        final userId = user.uid;
+        final eventDoc = FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('events')
+            .doc('$day-${selectedDate.month}-${selectedDate.year}');
+
+        await eventDoc.delete();
+
+        setState(() {
+          notes.remove(day);
+        });
+
+        Fluttertoast.showToast(
+          msg: "Event successfully deleted",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
       } catch (e) {
         debugPrint("Error deleting note: $e");
       }
@@ -169,7 +215,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(width: 10),
             Text(
-              'Welcome ${widget.userName}',
+              'Welcome ${firestoreName ?? "User"}',
               style: const TextStyle(fontSize: 18, color: Colors.white),
             ),
           ],
@@ -270,8 +316,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                       ),
                                   ],
                                 ),
-                                ..._buildCalendarRows(daysInMonth, firstWeekday,
-                                    currentMonth, currentYear),
+                                ..._buildCalendarRows(
+                                  daysInMonth,
+                                  firstWeekday,
+                                  currentMonth,
+                                  currentYear,
+                                ),
                               ],
                             ),
                           ],

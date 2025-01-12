@@ -20,7 +20,7 @@ class _MainPageState extends State<MainPage> {
 
   final List<Map<String, String>> allLecturers = [
     {
-      "name": "Zawawi bin Ismail@Wahab",
+      "name": "Zawawi bin Ismail@Abdul Wahab",
       "phone": "012-3456789",
       "room": "101-A"
     },
@@ -47,7 +47,7 @@ class _MainPageState extends State<MainPage> {
   ];
 
   final Map<String, String> imageAssets = {
-    "Zawawi bin Ismail@Wahab": "assets/k.jpg",
+    "Zawawi bin Ismail@Abdul Wahab": "assets/k.jpg",
     "Ahmad Nadzmi bin Fadzal": "assets/i.jpg",
     "Muhammad Atif bin Ramlan": "assets/j.jpg",
     "Siti Nurul Hayatie binti Ishak": "assets/h.jpg",
@@ -57,7 +57,7 @@ class _MainPageState extends State<MainPage> {
   final Map<String, List<Map<String, String>>> lecturersByCourse = {
     "CSP600": [
       {
-        "name": "Zawawi bin Ismail@Wahab",
+        "name": "Zawawi bin Ismail@Abdul Wahab",
         "phone": "012-3456789",
         "room": "101-A"
       },
@@ -283,7 +283,7 @@ class _MainPageState extends State<MainPage> {
                   final lecturer = lecturers[index];
                   return GestureDetector(
                     onTap: () {
-                      if (lecturer['name'] == "Zawawi bin Ismail@Wahab") {
+                      if (lecturer['name'] == "Zawawi bin Ismail@Abdul Wahab") {
                         Navigator.pushNamed(context, '/zawawi');
                       } else if (lecturer['name'] ==
                           "Ahmad Nadzmi bin Fadzal") {
@@ -323,23 +323,25 @@ class _MainPageState extends State<MainPage> {
                             ),
                             const SizedBox(width: 10),
                             // Lecturer details
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  lecturer['name']!,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    lecturer['name']!,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text("Phone: ${lecturer['phone']}",
-                                    style: const TextStyle(fontSize: 14)),
-                                Text("Room No: ${lecturer['room']}",
-                                    style: const TextStyle(fontSize: 14)),
-                              ],
+                                  Text("Phone: ${lecturer['phone']}",
+                                      style: const TextStyle(fontSize: 14)),
+                                  Text("Room No: ${lecturer['room']}",
+                                      style: const TextStyle(fontSize: 14)),
+                                ],
+                              ),
                             ),
                           ],
                         ),

@@ -48,10 +48,13 @@ class SuccessPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 ),
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const DashboardPage(userName: 'User')),
-                  ); // Navigate to the dashboard page
+                  Navigator.pushNamed(
+                   context,
+                    '/dashboard',
+                    arguments: 'yourUserNameHere',
+                  );
+
+                   // Navigate to the dashboard page
                 },
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,

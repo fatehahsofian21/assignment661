@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:fluttertoast/fluttertoast.dart';
 import 'login2.dart'; // Import LoginPage2
 
@@ -18,6 +19,8 @@ class SignupPageState extends State<SignupPage> {
   bool isConfirmPasswordVisible = false; // Manage confirm password visibility
 
   // Controllers for TextFields
+  final TextEditingController nameController =
+      TextEditingController(); // Name controller
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -31,17 +34,43 @@ class SignupPageState extends State<SignupPage> {
     });
   }
 
+  bool validateEmailFormat(String email) {
+    final studentRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@student\.uitm\.edu\.my$');
+    final lecturerRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@lecturer\.uitm\.edu\.my$');
+
+    if (userType == "Student") {
+      return studentRegex.hasMatch(email);
+    } else if (userType == "Lecturer") {
+      return lecturerRegex.hasMatch(email);
+    }
+    return false;
+  }
+
   Future<void> registerUser() async {
+    String name = nameController.text.trim();
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
     String confirmPassword = confirmPasswordController.text.trim();
 
-    // Validate password length based on user type
+    // Validate inputs
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      showToast("All fields are required.", isError: true);
+      return;
+    }
+
+    if (!validateEmailFormat(email)) {
+      showToast("Invalid email format for $userType.", isError: true);
+      return;
+    }
+
     if (userType == "Student" && password.length != 6) {
-      showToast("Student password must be exactly 6 characters.", isError: true);
+      showToast("Student password must be exactly 6 characters.",
+          isError: true);
       return;
     } else if (userType == "Lecturer" && password.length != 7) {
-      showToast("Lecturer password must be exactly 7 characters.", isError: true);
+      showToast("Lecturer password must be exactly 7 characters.",
+          isError: true);
       return;
     }
 
@@ -55,10 +84,22 @@ class SignupPageState extends State<SignupPage> {
     });
 
     try {
-      await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Save user info to Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'name': name,
+        'email': email,
+        'userType': userType,
+        'uid': userCredential.user!.uid,
+      });
 
       if (!mounted) return;
 
@@ -66,6 +107,7 @@ class SignupPageState extends State<SignupPage> {
       showToast("Registration successful! You can now log in.", isError: false);
 
       // Clear the text fields
+      nameController.clear();
       emailController.clear();
       passwordController.clear();
       confirmPasswordController.clear();
@@ -76,7 +118,8 @@ class SignupPageState extends State<SignupPage> {
         MaterialPageRoute(builder: (context) => const LoginPage2()),
       );
     } on FirebaseAuthException catch (e) {
-      showToast(e.message ?? "An error occurred during registration.", isError: true);
+      showToast(e.message ?? "An error occurred during registration.",
+          isError: true);
     } catch (e) {
       showToast("A network error occurred. Please try again.", isError: true);
     } finally {
@@ -174,7 +217,7 @@ class SignupPageState extends State<SignupPage> {
                                 onChanged: (value) {
                                   setState(() {
                                     userType = value!;
-                                    updateHintText();
+                                    updateHintText(); // Update hint text
                                   });
                                 },
                               ),
@@ -195,7 +238,7 @@ class SignupPageState extends State<SignupPage> {
                                 onChanged: (value) {
                                   setState(() {
                                     userType = value!;
-                                    updateHintText();
+                                    updateHintText(); // Update hint text
                                   });
                                 },
                               ),
@@ -208,6 +251,24 @@ class SignupPageState extends State<SignupPage> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      // Name TextField
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Full Name',
+                          labelStyle: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white24,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
                       // Email TextField
                       TextField(
                         controller: emailController,

@@ -25,6 +25,8 @@ dependencies:
   firebase_storage: ^12.3.7
   geolocator: ^10.0.1
   permission_handler: ^10.0.0
+  image: ^4.0.15
+  shared_preferences: ^2.0.15 # Use the latest version
 
 dev_dependencies:
   flutter_test:
