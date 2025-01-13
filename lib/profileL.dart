@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileLPage extends StatefulWidget {
   const ProfileLPage({Key? key}) : super(key: key);
@@ -22,7 +23,8 @@ class _ProfileLPageState extends State<ProfileLPage> {
   final TextEditingController phoneController =
       TextEditingController(text: "+60123456789");
   String email = "";
-  String lecturerID = "L202200567"; // Replace with actual lecturer ID.
+  String firstName = "";
+  String matricNumber = "";
 
   @override
   void initState() {
@@ -30,15 +32,29 @@ class _ProfileLPageState extends State<ProfileLPage> {
     _loadUserData();
   }
 
-  void _loadUserData() {
-    // Fetch the current user from Firebase Authentication
+  Future<void> _loadUserData() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      setState(() {
-        email = user.email ?? "lecturer@example.com";
-        nameController.text = user.email?.split("@")[0] ?? "Lecturer Name";
-      });
+      try {
+        DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
+            .instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          setState(() {
+            email = data?['email'] ?? "lecturer@example.com";
+            firstName = (data?['name'] ?? "Lecturer Name").split(" ")[0];
+            matricNumber = email.split("@")[0];
+            nameController.text = firstName;
+          });
+        }
+      } catch (e) {
+        debugPrint("Error loading user data: $e");
+      }
     }
   }
 
@@ -93,14 +109,6 @@ class _ProfileLPageState extends State<ProfileLPage> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.report, color: Colors.white),
-            onPressed: () {
-              // Add report functionality
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -120,18 +128,16 @@ class _ProfileLPageState extends State<ProfileLPage> {
                 children: [
                   CircleAvatar(
                     radius: 42,
-                    backgroundColor:
-                        Colors.white, // White background around the picture
+                    backgroundColor: Colors.white,
                     child: const CircleAvatar(
                       radius: 40,
-                      backgroundImage: AssetImage(
-                          'assets/profile.jpg'), // Replace with user image
+                      backgroundImage: AssetImage('assets/k.jpg'),
                     ),
                   ),
                   const SizedBox(height: 10),
                   if (!isEditMode)
                     Text(
-                      nameController.text,
+                      firstName,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 22,
@@ -143,7 +149,7 @@ class _ProfileLPageState extends State<ProfileLPage> {
                     _buildEditableTextField(nameController, isBold: true),
                   const SizedBox(height: 5),
                   Text(
-                    lecturerID,
+                    matricNumber,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 13,
@@ -153,10 +159,9 @@ class _ProfileLPageState extends State<ProfileLPage> {
                 ],
               ),
             ),
-
             // Details Section
             Container(
-              color: const Color(0xFFF5F5F5), // Light grey background
+              color: const Color(0xFFF5F5F5),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +176,6 @@ class _ProfileLPageState extends State<ProfileLPage> {
                     child: isEditMode
                         ? ElevatedButton(
                             onPressed: () {
-                              // Save changes
                               setState(() {
                                 isEditMode = false;
                               });
@@ -201,7 +205,6 @@ class _ProfileLPageState extends State<ProfileLPage> {
                           )
                         : ElevatedButton(
                             onPressed: () {
-                              // Enable edit mode
                               setState(() {
                                 isEditMode = true;
                               });

@@ -98,19 +98,26 @@ class _ZawawiPageState extends State<ZawawiPage> {
         return;
       }
       final userId = user.uid;
-      final email = user.email ?? "unknown@domain.com";
-      final username = email.split('@')[0]; // Extract part before "@"
+
+      // Generate a new document ID for the booking
+      final bookingRef = firestore
+          .collection('users')
+          .doc(userId)
+          .collection('bookings')
+          .doc();
+      final String documentId = bookingRef.id;
 
       // Prepare booking data
       Map<String, dynamic> bookingData = {
-        'userId': userId, // Add the userId field
-        'username': username, // Add username
+        'documentId': documentId, // Include the document ID
         'bookingDate': selectedDate?.toIso8601String(),
         'bookingTime': selectedTime,
         'venue': selectedVenue == "Other"
             ? otherVenueController.text
             : selectedVenue,
-        'remark': remarkController.text,
+        'remark':
+            remarkController.text.isNotEmpty ? remarkController.text : null,
+        'status': 'active', // Set status to active
         'timestamp': FieldValue.serverTimestamp(),
       };
 
@@ -139,8 +146,9 @@ class _ZawawiPageState extends State<ZawawiPage> {
         }
       }
 
-      // Store booking data in Firestore
-      await firestore.collection('bookings').add(bookingData);
+      // Store booking data in Firestore under the user's `bookings` subcollection
+      await bookingRef
+          .set(bookingData); // Use `set()` to save with the document ID
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -148,6 +156,16 @@ class _ZawawiPageState extends State<ZawawiPage> {
           backgroundColor: Colors.green,
         ),
       );
+
+      // Clear fields after successful booking
+      setState(() {
+        selectedDate = null;
+        selectedTime = null;
+        selectedVenue = "Lecturer's Room";
+        otherVenueController.clear();
+        remarkController.clear();
+        selectedImage = null;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

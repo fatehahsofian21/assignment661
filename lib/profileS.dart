@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
 class ProfileSPage extends StatefulWidget {
   const ProfileSPage({Key? key}) : super(key: key);
@@ -10,8 +17,9 @@ class ProfileSPage extends StatefulWidget {
 
 class _ProfileSPageState extends State<ProfileSPage> {
   bool isEditMode = false;
+  File? _profileImage;
+  String profileImageUrl = "";
 
-  // Controllers for text fields
   final TextEditingController nameController = TextEditingController();
   final TextEditingController campusController =
       TextEditingController(text: "UiTM Kampus Kuala Terengganu (Cendering)");
@@ -27,8 +35,7 @@ class _ProfileSPageState extends State<ProfileSPage> {
       TextEditingController(text: "+601167896254");
   String email = "";
   String userName = "";
-  String studentNumber =
-      "2022467903"; // Replace with actual user number if available.
+  String matricNumber = "";
 
   @override
   void initState() {
@@ -36,16 +43,117 @@ class _ProfileSPageState extends State<ProfileSPage> {
     _loadUserData();
   }
 
-  void _loadUserData() {
-    // Fetch the current user from Firebase Authentication
+  Future<void> _loadUserData() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      setState(() {
-        email = user.email ?? "user@example.com";
-        userName = user.email?.split("@")[0] ?? "User Name";
-        nameController.text = userName; // Auto-update name from email
-      });
+      try {
+        DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
+            .instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          Map<String, dynamic>? data = userDoc.data();
+          setState(() {
+            email = data?['email'] ?? "user@example.com";
+            userName = data?['name'] ?? "User Name";
+            matricNumber = email.split("@")[0];
+            profileImageUrl = data?['profilePicture'] ?? "";
+            nameController.text = userName;
+          });
+        }
+      } catch (e) {
+        debugPrint("Error loading user data: $e");
+      }
+    }
+  }
+
+  Future<void> _pickProfileImage() async {
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Select Image Source"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+            child: const Text("Camera"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            child: const Text("Gallery"),
+          ),
+        ],
+      ),
+    );
+
+    if (source != null) {
+      final pickedFile = await ImagePicker().pickImage(source: source);
+
+      if (pickedFile != null) {
+        setState(() {
+          _profileImage = File(pickedFile.path);
+        });
+        await _uploadProfileImage();
+      }
+    }
+  }
+
+  Future<void> _uploadProfileImage() async {
+    if (_profileImage == null) return;
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('profile_images/${user.uid}.jpg');
+
+        // Compress the image before uploading
+        final imageBytes = await _profileImage!.readAsBytes();
+        final img.Image? originalImage = img.decodeImage(imageBytes);
+        if (originalImage != null) {
+          final img.Image compressedImage = img.copyResize(
+            originalImage,
+            width: 800,
+            height: 600,
+          );
+
+          final Uint8List compressedBytes = Uint8List.fromList(
+            img.encodeJpg(compressedImage, quality: 70),
+          );
+
+          await storageRef.putData(compressedBytes);
+        }
+
+        final downloadUrl = await storageRef.getDownloadURL();
+
+        // Update profile picture URL in Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'profilePicture': downloadUrl});
+
+        setState(() {
+          profileImageUrl = downloadUrl;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Profile picture updated successfully!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error uploading profile image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Failed to upload profile picture."),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -58,15 +166,12 @@ class _ProfileSPageState extends State<ProfileSPage> {
         content: const Text("Are you sure you want to log out?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false), // Cancel logout
+            onPressed: () => Navigator.pop(context, false),
             child: const Text("Cancel"),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true), // Confirm logout
-            child: const Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
-            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -74,7 +179,7 @@ class _ProfileSPageState extends State<ProfileSPage> {
 
     if (confirm == true) {
       await FirebaseAuth.instance.signOut();
-      Navigator.pushReplacementNamed(context, '/login2'); // Navigate to login2
+      Navigator.pushReplacementNamed(context, '/login2');
     }
   }
 
@@ -100,22 +205,13 @@ class _ProfileSPageState extends State<ProfileSPage> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.report, color: Colors.white),
-            onPressed: () {
-              // Add report functionality
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Profile Header Section
             Container(
               padding:
-                  const EdgeInsets.symmetric(vertical: 10, horizontal: 140),
+                  const EdgeInsets.symmetric(vertical: 20, horizontal: 120),
               decoration: const BoxDecoration(
                 color: Colors.blue,
                 borderRadius: BorderRadius.only(
@@ -125,45 +221,49 @@ class _ProfileSPageState extends State<ProfileSPage> {
               ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 42,
-                    backgroundColor:
-                        Colors.white, // White background around the picture
-                    child: const CircleAvatar(
-                      radius: 40,
-                      backgroundImage: AssetImage(
-                          'assets/profile.jpg'), // Replace with user image
+                  GestureDetector(
+                    onTap: isEditMode ? _pickProfileImage : null,
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.white,
+                      backgroundImage: profileImageUrl.isNotEmpty
+                          ? NetworkImage(profileImageUrl)
+                          : const AssetImage('assets/profile.jpg')
+                              as ImageProvider,
+                      child: isEditMode
+                          ? const Icon(Icons.camera_alt, size: 30)
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 10),
                   if (!isEditMode)
                     Text(
-                      nameController.text,
+                      userName,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   if (isEditMode)
                     _buildEditableTextField(nameController, isBold: true),
                   const SizedBox(height: 5),
                   Text(
-                    studentNumber,
+                    matricNumber,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       color: Colors.white70,
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Details Section
             Container(
-              color: const Color(0xFFF5F5F5), // Light grey background
+              color: const Color(0xFFF5F5F5),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +280,6 @@ class _ProfileSPageState extends State<ProfileSPage> {
                     child: isEditMode
                         ? ElevatedButton(
                             onPressed: () {
-                              // Save changes
                               setState(() {
                                 isEditMode = false;
                               });
@@ -210,7 +309,6 @@ class _ProfileSPageState extends State<ProfileSPage> {
                           )
                         : ElevatedButton(
                             onPressed: () {
-                              // Enable edit mode
                               setState(() {
                                 isEditMode = true;
                               });

@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart'; // For formatting date
+import 'package:intl/intl.dart';
 
 class UpcomingPage extends StatelessWidget {
   const UpcomingPage({Key? key}) : super(key: key);
 
-  String _getUserName() {
+  Future<String> _getUserName() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null && user.email != null) {
-      return user.email!.split('@')[0]; // Extract username from email
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      return userDoc.data()?['name'] ?? "User";
     }
     return "User";
   }
@@ -35,127 +39,173 @@ class UpcomingPage extends StatelessWidget {
   String _formatDate(String dateString) {
     try {
       DateTime date = DateTime.parse(dateString);
-      return DateFormat("d MMM").format(date); // Example: "15 Jan"
+      return DateFormat("dd/MM/yy").format(date);
     } catch (e) {
       return "Invalid Date";
     }
   }
 
-  void _showCancellationSuccessDialog(
-    BuildContext context,
-    String bookingId,
-    String formattedDate,
-    String day,
-    String venue,
-    String reason,
-  ) {
-    FirebaseFirestore.instance
-        .collection('bookings')
-        .doc(bookingId)
-        .update({'status': 'Cancelled'}).then((_) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text(
-              "Cancellation Successful",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        children: [
-                          Text(
-                            formattedDate.split(' ')[0], // Day number
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            day, // Day name
-                            style: const TextStyle(
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+  void _showReasonDialog(BuildContext context, String documentId,
+      String formattedDate, String day, String venue) {
+    final TextEditingController reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Cancel Booking",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      borderRadius: BorderRadius.circular(5),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Zawawi bin Ismail@Abdul Wahab",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      children: [
+                        Text(
+                          formattedDate.split('/')[0],
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            "Venue: $venue",
-                            style: const TextStyle(fontSize: 14),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                          ),
-                        ],
-                      ),
+                        ),
+                        Text(
+                          day,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Reason:",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  reason.isNotEmpty ? reason : 'No reason provided.',
-                  style: const TextStyle(fontSize: 14),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 3,
-                ),
-              ],
-            ),
-            actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 224, 204, 161),
-                ),
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pushNamed(
-                      context, '/booking'); // Navigate back to booking
-                },
-                child: const Text(
-                  "Done",
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 96, 56, 8),
-                    fontSize: 16,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Zawawi",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                        Text(
+                          "Venue: $venue",
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                      ],
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Reason:",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                decoration: const InputDecoration(
+                  labelText: "Enter reason for cancellation",
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
             ],
-          );
-        },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final reason = reasonController.text.trim();
+                if (reason.isNotEmpty) {
+                  _cancelBooking(context, documentId, venue, reason);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Reason cannot be empty.")),
+                  );
+                }
+              },
+              child: const Text("Submit"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _cancelBooking(
+      BuildContext context, String documentId, String venue, String reason) {
+    if (documentId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid Booking ID")),
+      );
+      return;
+    }
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .collection('bookings')
+        .doc(documentId)
+        .update({'status': 'cancelled', 'reason': reason}).then((_) {
+      Navigator.pop(context); // Close the reason dialog
+      _showCancellationSuccessDialog(context, venue);
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to cancel booking: $error")),
       );
     });
+  }
+
+  void _showCancellationSuccessDialog(BuildContext context, String venue) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Cancellation Successful",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            "Your booking at $venue has been successfully cancelled.",
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Close popup
+                Navigator.popAndPushNamed(
+                    context, '/booking'); // Navigate to booking
+              },
+              child: const Text("Done"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -176,7 +226,11 @@ class UpcomingPage extends StatelessWidget {
       );
     }
 
-    final String bookingId = bookingData['id'];
+    final String documentId = bookingData['documentId'] ?? '';
+    final String venue = bookingData['venue'] ?? "N/A";
+    final String date = bookingData['bookingDate'] ?? "N/A";
+    final String day = _getDayFromDate(date);
+    final String formattedDate = _formatDate(date);
 
     return Scaffold(
       appBar: AppBar(
@@ -184,35 +238,14 @@ class UpcomingPage extends StatelessWidget {
         title: const Text("Upcoming Appointment"),
         elevation: 0,
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
-            .collection('bookings')
-            .doc(bookingId)
-            .get(),
+      body: FutureBuilder<String>(
+        future: _getUserName(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(
-              child: Text("Booking details not found."),
-            );
-          }
-
-          final bookingDetails = snapshot.data!.data() as Map<String, dynamic>?;
-
-          if (bookingDetails == null) {
-            return const Center(
-              child: Text("Failed to fetch booking details."),
-            );
-          }
-
-          final String date = bookingDetails['bookingDate'] ?? 'N/A';
-          final String formattedDate = _formatDate(date);
-          final String day = _getDayFromDate(date);
-          final String venue = bookingDetails['venue'] ?? 'N/A';
-          final String remark = bookingDetails['remark'] ?? 'N/A';
+          final userName = snapshot.data ?? "User";
 
           return Container(
             color: const Color.fromARGB(255, 235, 218, 181),
@@ -229,7 +262,7 @@ class UpcomingPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Hello, ${_getUserName()}!",
+                      "Hi, $userName!",
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -238,7 +271,7 @@ class UpcomingPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      "You have an upcoming appointment\nwith Zawawi bin Ismail@Abdul Wahab.",
+                      "You have an upcoming appointment with Zawawi bin Ismail@Abdul Wahab.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
@@ -256,7 +289,7 @@ class UpcomingPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Date: $formattedDate\nDay: $day\nVenue: $venue\nRemark: $remark",
+                      "Date: $formattedDate\nDay: $day\nVenue: $venue",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 16,
@@ -268,97 +301,20 @@ class UpcomingPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(255, 224, 204, 161),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 10,
-                            ),
-                          ),
                           onPressed: () {
                             Navigator.pop(context);
                           },
-                          child: const Text(
-                            "Back",
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 96, 56, 8),
-                              fontSize: 16,
-                            ),
-                          ),
+                          child: const Text("Back"),
                         ),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(255, 224, 204, 161),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 10,
-                            ),
-                          ),
                           onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                final TextEditingController reasonController =
-                                    TextEditingController();
-                                return AlertDialog(
-                                  title: const Text(
-                                    "Cancel Appointment",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextField(
-                                        controller: reasonController,
-                                        decoration: const InputDecoration(
-                                          labelText: "Reason:",
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        maxLines: 3,
-                                      ),
-                                    ],
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context); // Close dialog
-                                      },
-                                      child: const Text("No"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        final reason =
-                                            reasonController.text.trim();
-                                        if (reason.isNotEmpty) {
-                                          _showCancellationSuccessDialog(
-                                              context,
-                                              bookingId,
-                                              formattedDate,
-                                              day,
-                                              venue,
-                                              reason);
-                                        }
-                                      },
-                                      child: const Text("Yes"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                            _showReasonDialog(
+                                context, documentId, formattedDate, day, venue);
                           },
-                          child: const Text(
-                            "Cancel Booking",
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 96, 56, 8),
-                              fontSize: 16,
-                            ),
-                          ),
+                          child: const Text("Cancel Booking"),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),

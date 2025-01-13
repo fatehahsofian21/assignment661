@@ -15,6 +15,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   String? userName;
+  String? profilePicture;
   final Map<int, String> months = {
     1: 'January',
     2: 'February',
@@ -48,7 +49,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    fetchUserNameFromFirestore();
+    fetchUserDataFromFirestore();
     fetchNotes().then((_) {
       setState(() {
         isLoading = false;
@@ -56,7 +57,7 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  void fetchUserNameFromFirestore() async {
+  void fetchUserDataFromFirestore() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
@@ -66,9 +67,10 @@ class _DashboardPageState extends State<DashboardPage> {
             .get();
         setState(() {
           firestoreName = doc.data()?['name']?.split(' ')[0] ?? "User";
+          profilePicture = doc.data()?['profilePicture'];
         });
       } catch (e) {
-        debugPrint("Error fetching name: $e");
+        debugPrint("Error fetching user data: $e");
       }
     }
   }
@@ -210,8 +212,10 @@ class _DashboardPageState extends State<DashboardPage> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            const CircleAvatar(
-              child: Text('W'),
+            CircleAvatar(
+              backgroundImage: profilePicture != null
+                  ? NetworkImage(profilePicture!)
+                  : const AssetImage('assets/profile.jpg') as ImageProvider,
             ),
             const SizedBox(width: 10),
             Text(

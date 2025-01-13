@@ -20,7 +20,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   image_picker: ^0.8.7+4
   speech_to_text: ^7.0.0
-  intl: ^0.18.0
+  intl: ^0.17.0
   google_maps_flutter: ^2.2.0  # Keep only one instance of this dependency
   firebase_storage: ^12.3.7
   geolocator: ^10.0.1
@@ -59,4 +59,5 @@ flutter:
     - assets/1.jpg
     - assets/2.jpg
     - assets/3.jpg
+    - assets/cancel_icon.png
  

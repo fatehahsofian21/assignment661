@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class BookingPage extends StatefulWidget {
   const BookingPage({Key? key}) : super(key: key);
@@ -12,89 +13,57 @@ class BookingPage extends StatefulWidget {
 class _BookingPageState extends State<BookingPage> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
+  String selectedStatus = "Upcoming"; // Default dropdown selection
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: AppBar(
-          backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pushNamed(context, '/mainpage'),
-              ),
-              const Text(
-                "My Booking",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 19, 34, 48),
+        title: const Text(
+          "My Booking",
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: Container(
         color: const Color.fromARGB(255, 42, 71, 90),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                "Upcoming",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: DropdownButton<String>(
+                  value: selectedStatus,
+                  dropdownColor: const Color.fromARGB(255, 19, 34, 48),
+                  style: const TextStyle(color: Colors.white),
+                  items: ["Upcoming", "Cancelled", "Completed"].map((status) {
+                    return DropdownMenuItem(
+                      value: status,
+                      child: Text(status),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedStatus = value!;
+                    });
+                  },
                 ),
               ),
             ),
             Expanded(
-              child: _buildUpcomingBookingsList(),
+              child: _buildBookingsList(selectedStatus),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-        selectedItemColor: const Color.fromARGB(255, 75, 153, 193),
-        unselectedItemColor: Colors.grey,
-        currentIndex: 1, // Highlight My Booking
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle),
-            label: "My Booking",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "My Account",
-          ),
-        ],
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushNamed(context, '/dashboard');
-          } else if (index == 2) {
-            Navigator.pushNamed(context, '/myaccount');
-          }
-        },
-      ),
     );
   }
 
-  /// Builds a list of upcoming bookings for the logged-in user
-  Widget _buildUpcomingBookingsList() {
+  Widget _buildBookingsList(String status) {
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (userId == null) {
@@ -106,10 +75,14 @@ class _BookingPageState extends State<BookingPage> {
       );
     }
 
+    String firestoreStatus = _mapStatusToFirestore(status);
+
     return StreamBuilder<QuerySnapshot>(
       stream: firestore
+          .collection('users')
+          .doc(userId)
           .collection('bookings')
-          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: firestoreStatus)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -117,10 +90,10 @@ class _BookingPageState extends State<BookingPage> {
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
-              "No Upcoming bookings.",
-              style: TextStyle(color: Colors.white),
+              "No $status bookings.",
+              style: const TextStyle(color: Colors.white),
             ),
           );
         }
@@ -133,40 +106,129 @@ class _BookingPageState extends State<BookingPage> {
             final doc = bookings[index];
             final data = doc.data() as Map<String, dynamic>;
 
-            // Include the document ID in the data passed to the upcoming page
-            final bookingData = {
-              'id': doc.id,
-              ...data,
-            };
+            // Parse and format date
+            String formattedDate = _formatDate(data['bookingDate']);
+            String bookingId = doc.id;
 
-            return Card(
-              color: Colors.white,
-              margin:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: ListTile(
-                title: Text("Date: ${data['bookingDate']}"),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Time: ${data['bookingTime']}"),
-                    if (data.containsKey('remark'))
-                      Text("Remark: ${data['remark']}"),
-                  ],
+            return Dismissible(
+              key: Key(bookingId),
+              direction: status == "Cancelled"
+                  ? DismissDirection.endToStart
+                  : DismissDirection.none, // Swipe left for "Cancelled"
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20.0),
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
+              confirmDismiss: status == "Cancelled"
+                  ? (direction) =>
+                      _showDeleteConfirmation(context, bookingId, data)
+                  : null,
+              child: Card(
+                color: Colors.white,
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: ListTile(
+                  title: Text("Date: $formattedDate"),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Time: ${data['bookingTime']}"),
+                      Text("Venue: ${data['venue']}"),
+                    ],
+                  ),
+                  trailing: Text("Status: ${data['status']}"),
+                  onTap: () {
+                    if (status == "Cancelled") {
+                      Navigator.pushNamed(
+                        context,
+                        '/cancel',
+                        arguments: {
+                          'documentId': bookingId,
+                          'venue': data['venue'],
+                          'bookingDate': data['bookingDate'],
+                          'bookingTime': data['bookingTime'],
+                          'reason': data['reason'],
+                        },
+                      );
+                    } else if (status == "Upcoming") {
+                      Navigator.pushNamed(
+                        context,
+                        '/upcoming',
+                        arguments: {
+                          'documentId': bookingId,
+                          'venue': data['venue'],
+                          'bookingDate': data['bookingDate'],
+                          'bookingTime': data['bookingTime'],
+                        },
+                      );
+                    }
+                  },
                 ),
-                trailing: Text("Venue: ${data['venue']}"),
-                onTap: () {
-                  // Navigate to UpcomingPage when a card is clicked
-                  Navigator.pushNamed(
-                    context,
-                    '/upcoming',
-                    arguments: bookingData, // Pass booking data including 'id'
-                  );
-                },
               ),
             );
           },
         );
       },
     );
+  }
+
+  String _formatDate(String? date) {
+    if (date == null) return "N/A";
+    try {
+      DateTime parsedDate = DateTime.parse(date);
+      return DateFormat('dd MMM yyyy').format(parsedDate);
+    } catch (e) {
+      return "Invalid Date";
+    }
+  }
+
+  String _mapStatusToFirestore(String status) {
+    switch (status) {
+      case "Upcoming":
+        return "active";
+      case "Cancelled":
+        return "cancelled";
+      case "Completed":
+        return "completed";
+      default:
+        return "active";
+    }
+  }
+
+  Future<bool> _showDeleteConfirmation(
+      BuildContext context, String bookingId, Map<String, dynamic> data) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Delete Booking"),
+            content: Text(
+                "Are you sure you want to delete the booking on ${_formatDate(data['bookingDate'])}?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("No"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await firestore
+                      .collection('users')
+                      .doc(FirebaseAuth.instance.currentUser?.uid)
+                      .collection('bookings')
+                      .doc(bookingId)
+                      .delete();
+                  Navigator.pop(context, true); // Confirm deletion
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Booking deleted successfully.")),
+                  );
+                },
+                child: const Text("Yes"),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 }

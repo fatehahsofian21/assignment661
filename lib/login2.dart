@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dashboard.dart'; // Import DashboardPage
-import 'signup.dart'; // Import SignupPage
-import 'mainpageL.dart'; // Import MainPageL for lecturers
+import 'dashboard.dart';
+import 'signup.dart';
+import 'mainpageL.dart';
 
 class LoginPage2 extends StatefulWidget {
   const LoginPage2({super.key});
@@ -15,12 +15,11 @@ class LoginPage2 extends StatefulWidget {
 class LoginPage2State extends State<LoginPage2> {
   String email = "";
   String password = "";
-  String userType = "Student"; // Default selected user type
-  bool isPasswordVisible = false; // Manage password visibility
+  String userType = "Student";
+  bool isPasswordVisible = false;
 
   Future<void> login(BuildContext context) async {
     if (email.isEmpty || password.isEmpty) {
-      // Show error if email or password is empty
       Fluttertoast.showToast(
         msg: "Please enter your email and password.",
         toastLength: Toast.LENGTH_SHORT,
@@ -30,17 +29,14 @@ class LoginPage2State extends State<LoginPage2> {
       );
     } else {
       try {
-        // Attempt to log in with FirebaseAuth
         UserCredential userCredential =
             await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email.trim(),
           password: password,
         );
 
-        // Extract username from email (before "@")
         String userName = email.split('@')[0];
 
-        // Show success toast
         Fluttertoast.showToast(
           msg: "Login successful!",
           toastLength: Toast.LENGTH_SHORT,
@@ -49,24 +45,17 @@ class LoginPage2State extends State<LoginPage2> {
           textColor: Colors.white,
         );
 
-        // Navigate based on user type and password length
         if (userType == "Lecturer" && password.length == 7) {
-          // Navigate to MainPageL for lecturers
-          Navigator.pushReplacement(
+          Navigator.pushReplacementNamed(
             context,
-            MaterialPageRoute(
-              builder: (context) => MainPageL(
-                email: email,
-              ),
-            ),
+            '/mainpageL',
+            arguments: email,
           );
         } else if (userType == "Student") {
-          // Navigate to DashboardPage for students
-          Navigator.pushReplacement(
+          Navigator.pushReplacementNamed(
             context,
-            MaterialPageRoute(
-              builder: (context) => DashboardPage(userName: userName),
-            ),
+            '/dashboard',
+            arguments: userName,
           );
         } else {
           Fluttertoast.showToast(
@@ -78,7 +67,6 @@ class LoginPage2State extends State<LoginPage2> {
           );
         }
       } on FirebaseAuthException catch (e) {
-        // Handle FirebaseAuth errors
         if (e.code == 'user-not-found') {
           Fluttertoast.showToast(
             msg: "No user found for that email. Please sign up first.",
@@ -88,7 +76,6 @@ class LoginPage2State extends State<LoginPage2> {
             textColor: Colors.white,
           );
 
-          // Navigate to SignupPage
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const SignupPage()),
@@ -111,7 +98,6 @@ class LoginPage2State extends State<LoginPage2> {
           );
         }
       } catch (e) {
-        // Generic error handling
         Fluttertoast.showToast(
           msg: "An unexpected error occurred. Please try again later.",
           toastLength: Toast.LENGTH_SHORT,
@@ -128,9 +114,7 @@ class LoginPage2State extends State<LoginPage2> {
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            color: const Color.fromARGB(255, 17, 33, 41), // Background color
-          ),
+          Container(color: const Color.fromARGB(255, 17, 33, 41)),
           CustomPaint(
             painter: UpperCurvePainter(),
             child: Container(
@@ -182,7 +166,6 @@ class LoginPage2State extends State<LoginPage2> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // User Type Selection
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -228,35 +211,26 @@ class LoginPage2State extends State<LoginPage2> {
                         ],
                       ),
                       const SizedBox(height: 20),
- // Email TextField with dynamic hint text based on user type
-TextField(
-  onChanged: (value) => email = value,
-  decoration: InputDecoration(
-    labelText: userType == "Student" ? "Student's Email" : "Lecturer's Email",
-    labelStyle: const TextStyle(
-      fontSize: 16,
-      color: Colors.white,
-    ),
-    filled: true,
-    fillColor: Colors.white24,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-  ),
-  style: const TextStyle(color: Colors.white),
-),
-
+                      TextField(
+                        onChanged: (value) => email = value,
+                        decoration: InputDecoration(
+                          labelText: userType == "Student"
+                              ? "Student's Email"
+                              : "Lecturer's Email",
+                          labelStyle: const TextStyle(fontSize: 16),
+                          filled: true,
+                          fillColor: Colors.white24,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 10),
-                      // Password TextField
                       TextField(
                         onChanged: (value) => password = value,
                         obscureText: !isPasswordVisible,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          labelStyle: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
                           filled: true,
                           fillColor: Colors.white24,
                           border: OutlineInputBorder(
@@ -267,7 +241,6 @@ TextField(
                               isPasswordVisible
                                   ? Icons.visibility
                                   : Icons.visibility_off,
-                              color: Colors.white,
                             ),
                             onPressed: () {
                               setState(() {
@@ -276,32 +249,18 @@ TextField(
                             },
                           ),
                         ),
-                        style: const TextStyle(color: Colors.white),
                       ),
                       const SizedBox(height: 30),
-                      // Login Button
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () => login(context),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(200, 40),
-                            backgroundColor:
-                                const Color.fromARGB(255, 221, 186, 140),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            'LOGIN',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.black,
-                            ),
-                          ),
+                      ElevatedButton(
+                        onPressed: () => login(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color.fromARGB(255, 221, 186, 140),
+                          minimumSize: const Size(200, 40),
                         ),
+                        child: const Text('LOGIN'),
                       ),
                       const SizedBox(height: 20),
-                      // Register Sentence
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -322,7 +281,6 @@ TextField(
                               'Register',
                               style: TextStyle(
                                 color: Color.fromARGB(255, 221, 186, 140),
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),

@@ -6,7 +6,7 @@ import 'bookL.dart'; // Import BookLPage for navigation
 import 'profileL.dart'; // Import ProfileLPage for My Account
 
 class MainPageL extends StatefulWidget {
-  final String email; // Passed email from the login
+  final String email; // Add email parameter
   const MainPageL({Key? key, required this.email}) : super(key: key);
 
   @override
@@ -23,9 +23,13 @@ class _MainPageLState extends State<MainPageL> {
     'assets/3.jpg',
   ];
 
+  String firstName = "Lecturer";
+  String matricNumber = "";
+
   @override
   void initState() {
     super.initState();
+    _loadLecturerData();
     Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (_currentPage < images.length - 1) {
         _currentPage++;
@@ -39,6 +43,27 @@ class _MainPageLState extends State<MainPageL> {
         curve: Curves.easeInOut,
       );
     });
+  }
+
+  Future<void> _loadLecturerData() async {
+    try {
+      // Fetch data from Firestore using the email
+      DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
+          .instance
+          .collection('users')
+          .doc(widget.email.split('@')[0]) // Use email prefix as document ID
+          .get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        setState(() {
+          firstName = (data?['name'] ?? "Lecturer").split(" ")[0];
+          matricNumber = widget.email.split('@')[0];
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading lecturer data: $e");
+    }
   }
 
   @override
@@ -68,9 +93,6 @@ class _MainPageLState extends State<MainPageL> {
 
   @override
   Widget build(BuildContext context) {
-    // Extract the name from the email before '@'
-    String name = widget.email.split('@')[0];
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 19, 34, 48),
@@ -80,7 +102,7 @@ class _MainPageLState extends State<MainPageL> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Welcome $name!",
+              "Welcome $firstName!",
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -96,13 +118,53 @@ class _MainPageLState extends State<MainPageL> {
       ),
       body: SingleChildScrollView(
         child: Container(
-          color: const Color.fromARGB(
-              255, 235, 218, 181), // Soft pastel background
+          color: const Color.fromARGB(255, 235, 218, 181),
           child: Column(
             children: [
+              // Profile Section
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 42,
+                      backgroundColor: Colors.white,
+                      child: const CircleAvatar(
+                        radius: 40,
+                        backgroundImage: AssetImage('assets/k.jpg'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            firstName,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            matricNumber,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               // Image Carousel Section
               SizedBox(
-                height: 200, // Adjust the height of the carousel
+                height: 200,
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: images.length,
@@ -152,7 +214,7 @@ class _MainPageLState extends State<MainPageL> {
                       const Text(
                         "Upcoming Booking",
                         style: TextStyle(
-                          fontSize: 20, // Larger font size
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -201,7 +263,6 @@ class _MainPageLState extends State<MainPageL> {
                         alignment: Alignment.bottomRight,
                         child: TextButton(
                           onPressed: () {
-                            // Navigate to BookLPage when clicked
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -211,7 +272,7 @@ class _MainPageLState extends State<MainPageL> {
                           child: const Text(
                             "View more",
                             style: TextStyle(
-                              fontSize: 16, // Slightly larger font size
+                              fontSize: 16,
                               color: Color.fromARGB(255, 19, 34, 48),
                               fontWeight: FontWeight.bold,
                             ),
@@ -222,8 +283,7 @@ class _MainPageLState extends State<MainPageL> {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 20), // Extra space at the bottom
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -234,13 +294,11 @@ class _MainPageLState extends State<MainPageL> {
         unselectedItemColor: Colors.white,
         onTap: (index) {
           if (index == 1) {
-            // Navigate to Booking History
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const BookLPage()),
             );
           } else if (index == 2) {
-            // Navigate to ProfileLPage
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ProfileLPage()),
@@ -265,7 +323,6 @@ class _MainPageLState extends State<MainPageL> {
     );
   }
 
-  // Helper method to build individual booking cards
   Widget _buildBookingCard(String label, String value, Color color) {
     return Expanded(
       child: Container(
