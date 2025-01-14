@@ -28,6 +28,7 @@ dependencies:
   image: ^4.0.15
   shared_preferences: ^2.0.15 # Use the latest version
   local_auth: ^2.3.0
+  firebase_messaging: ^15.2.0
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +62,6 @@ flutter:
     - assets/2.jpg
     - assets/3.jpg
     - assets/cancel_icon.png
-    - assets/wall.jpg
+    - assets/wallpaper.png
     
  

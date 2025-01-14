@@ -85,7 +85,7 @@ class _MainPageLState extends State<MainPageL> {
       if (userDoc.docs.isNotEmpty) {
         final data = userDoc.docs.first.data();
         setState(() {
-          firstName = data['name'] ?? "Lecturer";
+          firstName = data['firstName'] ?? "Lecturer";
         });
       } else {
         debugPrint("User with email ${widget.email} not found.");
@@ -197,7 +197,8 @@ class _MainPageLState extends State<MainPageL> {
                   Navigator.pop(context);
                   deleteNoteInFirestore(day);
                 },
-                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                child:
+                    const Text('Delete', style: TextStyle(color: Colors.red)),
               ),
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -310,7 +311,7 @@ class _MainPageLState extends State<MainPageL> {
             ),
             const SizedBox(width: 10),
             Text(
-              "Welcome, $firstName!",
+              "Welcome!",
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -385,7 +386,8 @@ class _MainPageLState extends State<MainPageL> {
                               ])
                                 Container(
                                   padding: const EdgeInsets.all(8),
-                                  color: const Color.fromARGB(255, 197, 154, 186),
+                                  color:
+                                      const Color.fromARGB(255, 197, 154, 186),
                                   child: Center(
                                     child: Text(
                                       day,

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard.dart'; // Import DashboardPage
 import 'signup.dart'; // Import SignupPage
 import 'mainpageL.dart'; // Import MainPageL for lecturers
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage2 extends StatefulWidget {
   const LoginPage2({super.key});
@@ -18,110 +19,141 @@ class LoginPage2State extends State<LoginPage2> {
   String userType = "Student"; // Default selected user type
   bool isPasswordVisible = false; // Manage password visibility
 
-  Future<void> login(BuildContext context) async {
-    if (email.isEmpty || password.isEmpty) {
-      // Show error if email or password is empty
+    Future<void> login(BuildContext context) async {
+  if (email.isEmpty || password.isEmpty) {
+    Fluttertoast.showToast(
+      msg: "Please enter your email and password.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
+    return;
+  }
+
+  // Trim email and validate format
+  email = email.trim();
+  final emailRegex =
+      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+  if (!emailRegex.hasMatch(email)) {
+    Fluttertoast.showToast(
+      msg: "Invalid email format. Please check your email.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
+    return;
+  }
+
+  try {
+    // Firebase Authentication Login
+    UserCredential userCredential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: email, password: password);
+
+    // Get the UID of the authenticated user
+    String uid = userCredential.user!.uid;
+
+    // Validate user document in Firestore
+    DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (!userDoc.exists) {
+      // Attempt email-based query if UID fails
+      QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        Fluttertoast.showToast(
+          msg: "User with email $email not found in Firestore.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
+
+      userDoc = querySnapshot.docs.first;
+    }
+
+    // Extract userType
+    Map<String, dynamic>? userData = userDoc.data();
+    String userTypeFromFirestore = userData?['userType'] ?? '';
+
+    if (userTypeFromFirestore != userType) {
       Fluttertoast.showToast(
-        msg: "Please enter your email and password.",
+        msg: "Invalid user type for the given credentials.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    // Navigate based on userType
+    if (userType == "Lecturer") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainPageL(email: email),
+        ),
+      );
+    } else if (userType == "Student") {
+      String userName = email.split('@')[0];
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DashboardPage(userName: userName),
+        ),
+      );
+    }
+  } on FirebaseAuthException catch (e) {
+    if (e.code == 'user-not-found') {
+      Fluttertoast.showToast(
+        msg: "No user found for that email. Please sign up first.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SignupPage()),
+      );
+    } else if (e.code == 'wrong-password') {
+      Fluttertoast.showToast(
+        msg: "Incorrect password. Please try again.",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.CENTER,
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
     } else {
-      try {
-        // Attempt to log in with FirebaseAuth
-        UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email.trim(),
-          password: password,
-        );
-
-        // Extract username from email (before "@")
-        String userName = email.split('@')[0];
-
-        // Show success toast
-        Fluttertoast.showToast(
-          msg: "Login successful!",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-        );
-
-        // Navigate based on user type and password length
-        if (userType == "Lecturer" && password.length == 7) {
-          // Navigate to MainPageL for lecturers
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MainPageL(
-                email: email,
-              ),
-            ),
-          );
-        } else if (userType == "Student") {
-          // Navigate to DashboardPage for students
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DashboardPage(userName: userName),
-            ),
-          );
-        } else {
-          Fluttertoast.showToast(
-            msg: "Invalid login details for the selected user type.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        // Handle FirebaseAuth errors
-        if (e.code == 'user-not-found') {
-          Fluttertoast.showToast(
-            msg: "No user found for that email. Please sign up first.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-
-          // Navigate to SignupPage
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SignupPage()),
-          );
-        } else if (e.code == 'wrong-password') {
-          Fluttertoast.showToast(
-            msg: "Incorrect password. Please try again.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        } else {
-          Fluttertoast.showToast(
-            msg: "Error: ${e.message}",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        }
-      } catch (e) {
-        // Generic error handling
-        Fluttertoast.showToast(
-          msg: "An unexpected error occurred. Please try again later.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
-      }
+      Fluttertoast.showToast(
+        msg: "Error: ${e.message}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     }
+  } catch (e) {
+    Fluttertoast.showToast(
+      msg: "An unexpected error occurred: $e",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
   }
+}
+
 
   Future<void> resetPassword() async {
     if (email.isEmpty) {
@@ -134,7 +166,7 @@ class LoginPage2State extends State<LoginPage2> {
       );
     } else {
       try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim().toLowerCase());
         Fluttertoast.showToast(
           msg: "Password reset email sent! Check your inbox.",
           toastLength: Toast.LENGTH_SHORT,
