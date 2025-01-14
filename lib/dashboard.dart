@@ -138,7 +138,7 @@ class _DashboardPageState extends State<DashboardPage> {
         msg: "Event saved successfully",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.CENTER,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.brown[300],
         textColor: Colors.white,
       );
     } catch (e) {
@@ -206,7 +206,7 @@ class _DashboardPageState extends State<DashboardPage> {
           msg: "Event successfully deleted",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.CENTER,
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.brown[300],
           textColor: Colors.white,
         );
       } catch (e) {
@@ -235,7 +235,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(width: 10),
             Text(
-              'Welcome ${firestoreName ?? "User"}',
+              'Welcome ${firestoreName ?? "User"} !',
               style: const TextStyle(fontSize: 18, color: Colors.white),
             ),
           ],
@@ -248,14 +248,14 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.fromARGB(255, 42, 71, 90),
-              Color.fromARGB(255, 19, 34, 48),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage('assets/wallpaper.png'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.2), // Reduced transparency
+              BlendMode.dstATop,
+            ),
           ),
         ),
         child: Column(
@@ -273,9 +273,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              const Color.fromARGB(255, 203, 169, 105),
+                              const Color.fromARGB(255, 182, 125, 206),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: const Center(
@@ -289,7 +289,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 25),
+                      const SizedBox(height: 20),
                       Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
@@ -298,70 +298,20 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         child: Column(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      if (selectedDate.month == 1) {
-                                        selectedDate = DateTime(
-                                          selectedDate.year - 1,
-                                          12,
-                                          selectedDate.day,
-                                        );
-                                      } else {
-                                        selectedDate = DateTime(
-                                          selectedDate.year,
-                                          selectedDate.month - 1,
-                                          selectedDate.day,
-                                        );
-                                      }
-                                      fetchNotes();
-                                    });
-                                  },
-                                  icon: const Icon(
-                                    Icons.arrow_left,
-                                    color: Colors.black,
-                                  ),
+                            Center(
+                              child: Text(
+                                '${months[selectedDate.month]} ${selectedDate.year}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                Text(
-                                  '${months[selectedDate.month]} ${selectedDate.year}',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      if (selectedDate.month == 12) {
-                                        selectedDate = DateTime(
-                                          selectedDate.year + 1,
-                                          1,
-                                          selectedDate.day,
-                                        );
-                                      } else {
-                                        selectedDate = DateTime(
-                                          selectedDate.year,
-                                          selectedDate.month + 1,
-                                          selectedDate.day,
-                                        );
-                                      }
-                                      fetchNotes();
-                                    });
-                                  },
-                                  icon: const Icon(
-                                    Icons.arrow_right,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Table(
                               border: TableBorder.all(
-                                  color: const Color.fromARGB(255, 0, 0, 0)),
+                                color: const Color.fromARGB(255, 0, 0, 0),
+                              ),
                               children: [
                                 TableRow(
                                   children: [
@@ -406,9 +356,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       const Text(
                         "What's New",
                         style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       SizedBox(
@@ -507,7 +458,9 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Container(
             height: 50,
             decoration: BoxDecoration(
-              color: notes.containsKey(day)
+              color: notes.containsKey(day) &&
+                      selectedDate.month == currentMonth &&
+                      selectedDate.year == currentYear
                   ? pastelColors[day % pastelColors.length]
                   : Colors.transparent,
               shape: BoxShape.rectangle,
@@ -533,7 +486,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       day.toString(),
                       style: const TextStyle(fontSize: 16),
                     ),
-                    if (notes.containsKey(day))
+                    if (notes.containsKey(day) &&
+                        selectedDate.month == currentMonth &&
+                        selectedDate.year == currentYear)
                       const Text(
                         'Event',
                         style: TextStyle(fontSize: 10, color: Colors.red),

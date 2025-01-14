@@ -19,14 +19,16 @@ class _BookingPageState extends State<BookingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 19, 34, 48),
+        backgroundColor: const Color.fromARGB(255, 34, 56, 71),
         title: const Text(
           "My Booking",
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
+        iconTheme: const IconThemeData(color: Colors.white), // Arrow color
       ),
       body: Container(
         color: const Color.fromARGB(255, 42, 71, 90),
@@ -126,7 +128,7 @@ class _BookingPageState extends State<BookingPage> {
                       _showDeleteConfirmation(context, bookingId, data)
                   : null,
               child: Card(
-                color: Colors.white,
+                color: const Color.fromARGB(255, 255, 248, 220), // Cream color
                 margin:
                     const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: ListTile(
@@ -138,7 +140,17 @@ class _BookingPageState extends State<BookingPage> {
                       Text("Venue: ${data['venue']}"),
                     ],
                   ),
-                  trailing: Text("Status: ${data['status']}"),
+                  trailing: Text(
+                    "Status: ${data['status']}",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: data['status'] == 'active'
+                          ? Colors.green
+                          : data['status'] == 'cancelled'
+                              ? Colors.red
+                              : Colors.black,
+                    ),
+                  ),
                   onTap: () {
                     if (status == "Cancelled") {
                       Navigator.pushNamed(

@@ -54,9 +54,14 @@ class UpcomingPage extends StatelessWidget {
       barrierDismissible: false, // Prevent closing by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          backgroundColor:
+              const Color.fromARGB(255, 255, 244, 230), // Cream color
           title: const Text(
             "Cancel Booking",
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -76,11 +81,15 @@ class UpcomingPage extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            color: Colors.black,
                           ),
                         ),
                         Text(
                           day,
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
                         ),
                       ],
                     ),
@@ -95,13 +104,17 @@ class UpcomingPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Colors.black,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
                         Text(
                           "Venue: $venue",
-                          style: const TextStyle(fontSize: 14),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
@@ -116,6 +129,7 @@ class UpcomingPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
@@ -134,6 +148,10 @@ class UpcomingPage extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
               },
+              style: TextButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 206, 206, 206),
+                foregroundColor: const Color.fromARGB(255, 127, 79, 141),
+              ),
               child: const Text("Cancel"),
             ),
             ElevatedButton(
@@ -147,6 +165,9 @@ class UpcomingPage extends StatelessWidget {
                   );
                 }
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 206, 206, 206),
+              ),
               child: const Text("Submit"),
             ),
           ],
@@ -185,13 +206,18 @@ class UpcomingPage extends StatelessWidget {
       barrierDismissible: false, // Prevent closing by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          backgroundColor:
+              const Color.fromARGB(255, 255, 244, 230), // Cream color
           title: const Text(
             "Cancellation Successful",
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
           ),
           content: Text(
             "Your booking at $venue has been successfully cancelled.",
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, color: Colors.black),
           ),
           actions: [
             ElevatedButton(
@@ -200,6 +226,9 @@ class UpcomingPage extends StatelessWidget {
                 Navigator.popAndPushNamed(
                     context, '/booking'); // Navigate to booking
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 206, 206, 206),
+              ),
               child: const Text("Done"),
             ),
           ],
@@ -217,8 +246,14 @@ class UpcomingPage extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(
           backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-          title: const Text("Upcoming Appointment"),
+          title: const Text(
+            "Upcoming Appointment",
+            style: TextStyle(
+              color: Colors.white, // Changed to white
+            ),
+          ),
           elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white), // White arrow
         ),
         body: const Center(
           child: Text("No booking details available."),
@@ -235,8 +270,14 @@ class UpcomingPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-        title: const Text("Upcoming Appointment"),
+        title: const Text(
+          "Upcoming Appointment",
+          style: TextStyle(
+            color: Colors.white, // Changed to white
+          ),
+        ),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white), // White arrow
       ),
       body: FutureBuilder<String>(
         future: _getUserName(),
@@ -304,6 +345,10 @@ class UpcomingPage extends StatelessWidget {
                           onPressed: () {
                             Navigator.pop(context);
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(
+                                255, 206, 206, 206), // Changed to grey
+                          ),
                           child: const Text("Back"),
                         ),
                         ElevatedButton(
@@ -311,6 +356,10 @@ class UpcomingPage extends StatelessWidget {
                             _showReasonDialog(
                                 context, documentId, formattedDate, day, venue);
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(
+                                255, 206, 206, 206), // Changed to grey
+                          ),
                           child: const Text("Cancel Booking"),
                         ),
                       ],
