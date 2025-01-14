@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        kotlin_version = "1.8.10" // Ensure Kotlin version matches your Gradle plugin
+        kotlin_version = "1.7.0" // Ensure Kotlin version matches your Gradle plugin
     }
     repositories {
         google()
@@ -10,6 +10,7 @@ buildscript {
         // Update to the latest compatible version of the Android Gradle Plugin
         classpath "com.android.tools.build:gradle:8.2.1"
         classpath 'com.google.gms:google-services:4.3.15'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 

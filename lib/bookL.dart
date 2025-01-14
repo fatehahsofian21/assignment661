@@ -1,128 +1,174 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 
 class BookLPage extends StatefulWidget {
   const BookLPage({Key? key}) : super(key: key);
 
   @override
-  _BookLPageState createState() => _BookLPageState();
+  State<BookLPage> createState() => _BookLPageState();
 }
 
 class _BookLPageState extends State<BookLPage> {
-  String filterStatus = "Completed"; // Default dropdown filter
-  final List<Map<String, String>> bookings = [
-    {"name": "Teha", "status": "Completed"},
-    {"name": "Husna", "status": "Cancelled"},
-    {"name": "Rai", "status": "Completed"},
-    {"name": "Ali", "status": "Cancelled"},
+  String selectedStatus = "Upcoming"; // Default dropdown selection
+
+  // Mock booking data
+  final List<Map<String, dynamic>> mockBookings = [
+    {
+      "bookingDate": "2025-01-15",
+      "bookingTime": "10:00 AM",
+      "status": "active",
+      "venue": "Lecture Room A",
+      "remark": "Bring laptop",
+    },
+    {
+      "bookingDate": "2025-01-16",
+      "bookingTime": "02:00 PM",
+      "status": "cancelled",
+      "venue": "Hall 2",
+      "remark": "Cancelled due to maintenance",
+    },
+    {
+      "bookingDate": "2025-01-17",
+      "bookingTime": "09:00 AM",
+      "status": "active",
+      "venue": "Lecture Room B",
+      "remark": "Presentation Day",
+    },
+    {
+      "bookingDate": "2025-01-18",
+      "bookingTime": "11:00 AM",
+      "status": "cancelled",
+      "venue": "Hall 3",
+      "remark": "Cancelled due to weather",
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, String>> filteredBookings = bookings
-        .where((booking) => booking['status'] == filterStatus)
-        .toList();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 19, 34, 48),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
         title: const Text(
           "Booking History",
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Container(
+        color: const Color.fromARGB(255, 42, 71, 90),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dropdown for filtering
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Filter by:",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                DropdownButton<String>(
-                  value: filterStatus,
-                  onChanged: (String? newValue) {
+            // Dropdown to filter bookings by status
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: DropdownButton<String>(
+                  value: selectedStatus,
+                  dropdownColor: const Color.fromARGB(255, 19, 34, 48),
+                  style: const TextStyle(color: Colors.white),
+                  items: ["Upcoming", "Cancelled"].map((status) {
+                    return DropdownMenuItem(
+                      value: status,
+                      child: Text(
+                        status,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
                     setState(() {
-                      filterStatus = newValue!;
+                      selectedStatus = value!;
                     });
                   },
-                  items: <String>["Completed", "Cancelled"]
-                      .map<DropdownMenuItem<String>>(
-                          (String value) => DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              ))
-                      .toList(),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // List of bookings
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredBookings.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            filteredBookings[index]["name"]!,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Status: ${filteredBookings[index]["status"]}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
               ),
+            ),
+            // Booking list
+            Expanded(
+              child: _buildBookingsList(selectedStatus),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildBookingsList(String status) {
+    // Map the status to mock data filtering
+    final filteredBookings = mockBookings
+        .where((booking) =>
+            booking['status'] == (status == "Upcoming" ? "active" : "cancelled"))
+        .toList();
+
+    if (filteredBookings.isEmpty) {
+      return Center(
+        child: Text(
+          "No $status bookings available.",
+          style: const TextStyle(color: Colors.white),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: filteredBookings.length,
+      itemBuilder: (context, index) {
+        final booking = filteredBookings[index];
+        String formattedDate = _formatDate(booking['bookingDate']);
+        String day = _getDayFromDate(booking['bookingDate']);
+
+        return Card(
+          color: Colors.white,
+          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: ListTile(
+            title: Text("Date: $formattedDate ($day)"),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Time: ${booking['bookingTime']}"),
+                Text("Venue: ${booking['venue']}"),
+                Text("Remark: ${booking['remark']}"),
+              ],
+            ),
+            trailing: Text(
+              status,
+              style: TextStyle(
+                color: status == "Upcoming" ? Colors.green : Colors.red,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDate(String? date) {
+    if (date == null) return "N/A";
+    try {
+      final DateTime parsedDate = DateTime.parse(date);
+      return DateFormat('dd MMM yyyy').format(parsedDate);
+    } catch (e) {
+      return "Invalid Date";
+    }
+  }
+
+  String _getDayFromDate(String? dateString) {
+    try {
+      DateTime date = DateTime.parse(dateString ?? "");
+      List<String> weekdays = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ];
+      return weekdays[date.weekday - 1];
+    } catch (e) {
+      return "Invalid Date";
+    }
   }
 }

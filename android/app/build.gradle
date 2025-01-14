@@ -40,8 +40,11 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth-ktx' // Firebase Auth library
     implementation 'com.google.firebase:firebase-analytics-ktx' // Analytics library (replaces core dependency)
     implementation 'com.google.android.gms:play-services-auth:20.6.0' // Optional: Google Sign-In
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 flutter {
     source "../.."
 }
+
+

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dashboard.dart';
-import 'signup.dart';
-import 'mainpageL.dart';
+import 'dashboard.dart'; // Import DashboardPage
+import 'signup.dart'; // Import SignupPage
+import 'mainpageL.dart'; // Import MainPageL for lecturers
 
 class LoginPage2 extends StatefulWidget {
   const LoginPage2({super.key});
@@ -15,11 +15,12 @@ class LoginPage2 extends StatefulWidget {
 class LoginPage2State extends State<LoginPage2> {
   String email = "";
   String password = "";
-  String userType = "Student";
-  bool isPasswordVisible = false;
+  String userType = "Student"; // Default selected user type
+  bool isPasswordVisible = false; // Manage password visibility
 
   Future<void> login(BuildContext context) async {
     if (email.isEmpty || password.isEmpty) {
+      // Show error if email or password is empty
       Fluttertoast.showToast(
         msg: "Please enter your email and password.",
         toastLength: Toast.LENGTH_SHORT,
@@ -29,14 +30,17 @@ class LoginPage2State extends State<LoginPage2> {
       );
     } else {
       try {
+        // Attempt to log in with FirebaseAuth
         UserCredential userCredential =
             await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email.trim(),
           password: password,
         );
 
+        // Extract username from email (before "@")
         String userName = email.split('@')[0];
 
+        // Show success toast
         Fluttertoast.showToast(
           msg: "Login successful!",
           toastLength: Toast.LENGTH_SHORT,
@@ -45,17 +49,24 @@ class LoginPage2State extends State<LoginPage2> {
           textColor: Colors.white,
         );
 
+        // Navigate based on user type and password length
         if (userType == "Lecturer" && password.length == 7) {
-          Navigator.pushReplacementNamed(
+          // Navigate to MainPageL for lecturers
+          Navigator.pushReplacement(
             context,
-            '/mainpageL',
-            arguments: email,
+            MaterialPageRoute(
+              builder: (context) => MainPageL(
+                email: email,
+              ),
+            ),
           );
         } else if (userType == "Student") {
-          Navigator.pushReplacementNamed(
+          // Navigate to DashboardPage for students
+          Navigator.pushReplacement(
             context,
-            '/dashboard',
-            arguments: userName,
+            MaterialPageRoute(
+              builder: (context) => DashboardPage(userName: userName),
+            ),
           );
         } else {
           Fluttertoast.showToast(
@@ -67,6 +78,7 @@ class LoginPage2State extends State<LoginPage2> {
           );
         }
       } on FirebaseAuthException catch (e) {
+        // Handle FirebaseAuth errors
         if (e.code == 'user-not-found') {
           Fluttertoast.showToast(
             msg: "No user found for that email. Please sign up first.",
@@ -76,6 +88,7 @@ class LoginPage2State extends State<LoginPage2> {
             textColor: Colors.white,
           );
 
+          // Navigate to SignupPage
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const SignupPage()),
@@ -98,8 +111,40 @@ class LoginPage2State extends State<LoginPage2> {
           );
         }
       } catch (e) {
+        // Generic error handling
         Fluttertoast.showToast(
           msg: "An unexpected error occurred. Please try again later.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+      }
+    }
+  }
+
+  Future<void> resetPassword() async {
+    if (email.isEmpty) {
+      Fluttertoast.showToast(
+        msg: "Please enter your email to reset your password.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } else {
+      try {
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
+        Fluttertoast.showToast(
+          msg: "Password reset email sent! Check your inbox.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+      } catch (e) {
+        Fluttertoast.showToast(
+          msg: "Error: ${e.toString()}",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.CENTER,
           backgroundColor: Colors.red,
@@ -114,7 +159,9 @@ class LoginPage2State extends State<LoginPage2> {
     return Scaffold(
       body: Stack(
         children: [
-          Container(color: const Color.fromARGB(255, 17, 33, 41)),
+          Container(
+            color: const Color.fromARGB(255, 17, 33, 41), // Background color
+          ),
           CustomPaint(
             painter: UpperCurvePainter(),
             child: Container(
@@ -217,13 +264,17 @@ class LoginPage2State extends State<LoginPage2> {
                           labelText: userType == "Student"
                               ? "Student's Email"
                               : "Lecturer's Email",
-                          labelStyle: const TextStyle(fontSize: 16),
+                          labelStyle: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                           filled: true,
                           fillColor: Colors.white24,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
+                        style: const TextStyle(color: Colors.white),
                       ),
                       const SizedBox(height: 10),
                       TextField(
@@ -231,6 +282,10 @@ class LoginPage2State extends State<LoginPage2> {
                         obscureText: !isPasswordVisible,
                         decoration: InputDecoration(
                           labelText: 'Password',
+                          labelStyle: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                           filled: true,
                           fillColor: Colors.white24,
                           border: OutlineInputBorder(
@@ -241,6 +296,7 @@ class LoginPage2State extends State<LoginPage2> {
                               isPasswordVisible
                                   ? Icons.visibility
                                   : Icons.visibility_off,
+                              color: Colors.white,
                             ),
                             onPressed: () {
                               setState(() {
@@ -249,16 +305,42 @@ class LoginPage2State extends State<LoginPage2> {
                             },
                           ),
                         ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: resetPassword,
+                          child: const Text(
+                            "Forgot Password?",
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 221, 186, 140),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 30),
-                      ElevatedButton(
-                        onPressed: () => login(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 221, 186, 140),
-                          minimumSize: const Size(200, 40),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () => login(context),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(200, 45),
+                            backgroundColor:
+                                const Color.fromARGB(255, 221, 186, 140),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'LOGIN',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
-                        child: const Text('LOGIN'),
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -281,6 +363,7 @@ class LoginPage2State extends State<LoginPage2> {
                               'Register',
                               style: TextStyle(
                                 color: Color.fromARGB(255, 221, 186, 140),
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),

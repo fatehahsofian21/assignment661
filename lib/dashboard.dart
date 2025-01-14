@@ -151,16 +151,32 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Event'),
-        content: const Text('Are you sure you want to delete this event?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        backgroundColor: Colors.brown[50],
+        title: const Text(
+          'Delete Event',
+          style: TextStyle(color: Colors.brown, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this event?',
+          style: TextStyle(color: Colors.black87),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -259,7 +275,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           backgroundColor:
                               const Color.fromARGB(255, 203, 169, 105),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
                         child: const Center(
@@ -273,7 +289,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 25),
                       Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
@@ -282,10 +298,65 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         child: Column(
                           children: [
-                            Text(
-                              '${months[currentMonth]} $currentYear',
-                              style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      if (selectedDate.month == 1) {
+                                        selectedDate = DateTime(
+                                          selectedDate.year - 1,
+                                          12,
+                                          selectedDate.day,
+                                        );
+                                      } else {
+                                        selectedDate = DateTime(
+                                          selectedDate.year,
+                                          selectedDate.month - 1,
+                                          selectedDate.day,
+                                        );
+                                      }
+                                      fetchNotes();
+                                    });
+                                  },
+                                  icon: const Icon(
+                                    Icons.arrow_left,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Text(
+                                  '${months[selectedDate.month]} ${selectedDate.year}',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      if (selectedDate.month == 12) {
+                                        selectedDate = DateTime(
+                                          selectedDate.year + 1,
+                                          1,
+                                          selectedDate.day,
+                                        );
+                                      } else {
+                                        selectedDate = DateTime(
+                                          selectedDate.year,
+                                          selectedDate.month + 1,
+                                          selectedDate.day,
+                                        );
+                                      }
+                                      fetchNotes();
+                                    });
+                                  },
+                                  icon: const Icon(
+                                    Icons.arrow_right,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 10),
                             Table(
@@ -498,11 +569,24 @@ class _DashboardPageState extends State<DashboardPage> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: Text(notes.containsKey(day) ? 'Edit Note ' : 'Add Note '),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          backgroundColor: Colors.brown[50],
+          title: Text(
+            notes.containsKey(day) ? 'Edit Note ' : 'Add Note ',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 96, 40, 113),
+            ),
+          ),
           content: TextField(
             onChanged: (value) => newNote = value,
             controller: TextEditingController(text: newNote),
-            decoration: const InputDecoration(hintText: "Enter your note"),
+            decoration: const InputDecoration(
+              hintText: "Enter your note",
+              border: OutlineInputBorder(),
+            ),
           ),
           actions: [
             if (notes.containsKey(day))
@@ -511,21 +595,33 @@ class _DashboardPageState extends State<DashboardPage> {
                   Navigator.pop(context);
                   deleteNoteInFirestore(day);
                 },
-                child:
-                    const Text('Delete', style: TextStyle(color: Colors.red)),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
               ),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color.fromARGB(255, 113, 112, 112)),
+              ),
             ),
             TextButton(
-                onPressed: () {
-                  if (newNote.isNotEmpty) {
-                    addOrUpdateNoteInFirestore(day, newNote);
-                  }
-                  Navigator.pop(context);
-                },
-                child: Text(notes.containsKey(day) ? 'Update' : 'Save')),
+              onPressed: () {
+                if (newNote.isNotEmpty) {
+                  addOrUpdateNoteInFirestore(day, newNote);
+                }
+                Navigator.pop(context);
+              },
+              child: Text(
+                notes.containsKey(day) ? 'Update' : 'Save',
+                style: const TextStyle(
+                  color: Color.fromARGB(255, 96, 40, 113),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         );
       },

@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'bookL.dart'; // Import BookLPage for navigation
-import 'profileL.dart'; // Import ProfileLPage for My Account
+import 'package:fluttertoast/fluttertoast.dart';
+import 'bookL.dart';
+import 'profileL.dart';
 
 class MainPageL extends StatefulWidget {
-  final String email; // Add email parameter
+  final String email;
   const MainPageL({Key? key, required this.email}) : super(key: key);
 
   @override
@@ -24,12 +24,40 @@ class _MainPageLState extends State<MainPageL> {
   ];
 
   String firstName = "Lecturer";
-  String matricNumber = "";
+
+  DateTime selectedDate = DateTime.now();
+  Map<int, String> notes = {};
+  final Map<int, String> months = {
+    1: 'January',
+    2: 'February',
+    3: 'March',
+    4: 'April',
+    5: 'May',
+    6: 'June',
+    7: 'July',
+    8: 'August',
+    9: 'September',
+    10: 'October',
+    11: 'November',
+    12: 'December',
+  };
+
+  final List<Color> pastelColors = [
+    Colors.pink.shade100,
+    Colors.blue.shade100,
+    Colors.green.shade100,
+    Colors.purple.shade100,
+    Colors.orange.shade100,
+    Colors.yellow.shade100,
+    Colors.teal.shade100,
+    Colors.red.shade100,
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadLecturerData();
+    fetchNotes();
     Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (_currentPage < images.length - 1) {
         _currentPage++;
@@ -37,131 +65,266 @@ class _MainPageLState extends State<MainPageL> {
         _currentPage = 0;
       }
 
-      _pageController.animateToPage(
-        _currentPage,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     });
   }
 
   Future<void> _loadLecturerData() async {
     try {
-      // Fetch data from Firestore using the email
-      DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
-          .instance
+      final userDoc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.email.split('@')[0]) // Use email prefix as document ID
+          .where('email', isEqualTo: widget.email)
           .get();
 
-      if (userDoc.exists) {
-        final data = userDoc.data();
+      if (userDoc.docs.isNotEmpty) {
+        final data = userDoc.docs.first.data();
         setState(() {
-          firstName = (data?['name'] ?? "Lecturer").split(" ")[0];
-          matricNumber = widget.email.split('@')[0];
+          firstName = data['name'] ?? "Lecturer";
         });
+      } else {
+        debugPrint("User with email ${widget.email} not found.");
       }
     } catch (e) {
       debugPrint("Error loading lecturer data: $e");
     }
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  Future<void> fetchNotes() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.email) // Using email as document ID
+          .collection('events')
+          .get();
+
+      setState(() {
+        notes = {};
+        for (var doc in querySnapshot.docs) {
+          final data = doc.data();
+          final day = int.tryParse(data['day']?.toString() ?? '');
+          final note = data['note']?.toString() ?? '';
+
+          if (day != null && note.isNotEmpty) {
+            notes[day] = note;
+          }
+        }
+      });
+    } catch (e) {
+      debugPrint("Error fetching notes: $e");
+    }
   }
 
-  /// Fetch all usernames directly from the `bookings` collection
-  Future<List<String>> _fetchAllUsernames() async {
-    final bookingCollection = FirebaseFirestore.instance.collection('bookings');
-    final querySnapshot = await bookingCollection.get();
+  Future<void> addOrUpdateNoteInFirestore(int day, String note) async {
+    try {
+      final eventDoc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.email) // Using email as document ID
+          .collection('events')
+          .doc('$day-${selectedDate.month}-${selectedDate.year}');
 
-    List<String> usernames = [];
+      await eventDoc.set({
+        'day': day,
+        'month': selectedDate.month,
+        'year': selectedDate.year,
+        'note': note,
+      });
 
-    for (var doc in querySnapshot.docs) {
-      final bookingData = doc.data();
-      if (bookingData.containsKey('username')) {
-        usernames.add(bookingData['username']);
-      } else {
-        usernames.add("Unknown User");
+      setState(() {
+        notes[day] = note;
+      });
+
+      Fluttertoast.showToast(
+        msg: "Event saved successfully",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+    } catch (e) {
+      debugPrint("Error adding/updating note: $e");
+    }
+  }
+
+  Future<void> deleteNoteInFirestore(int day) async {
+    try {
+      final eventDoc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.email)
+          .collection('events')
+          .doc('$day-${selectedDate.month}-${selectedDate.year}');
+
+      await eventDoc.delete();
+
+      setState(() {
+        notes.remove(day);
+      });
+
+      Fluttertoast.showToast(
+        msg: "Event deleted successfully",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+    } catch (e) {
+      debugPrint("Error deleting note: $e");
+    }
+  }
+
+  void _onDateSelected(int day) {
+    String newNote = notes[day] ?? "";
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(notes.containsKey(day) ? 'Edit Note' : 'Add Note'),
+          content: TextField(
+            onChanged: (value) => newNote = value,
+            controller: TextEditingController(text: newNote),
+            decoration: const InputDecoration(hintText: "Enter your note"),
+          ),
+          actions: [
+            if (notes.containsKey(day))
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  deleteNoteInFirestore(day);
+                },
+                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (newNote.isNotEmpty) {
+                  addOrUpdateNoteInFirestore(day, newNote);
+                }
+                Navigator.pop(context);
+              },
+              child: Text(notes.containsKey(day) ? 'Update' : 'Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  List<TableRow> _buildCalendarRows(
+      int daysInMonth, int firstWeekday, int currentMonth, int currentYear) {
+    List<TableRow> rows = [];
+    List<Widget> cells = [];
+
+    for (int i = 1; i < firstWeekday; i++) {
+      cells.add(Container());
+    }
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      cells.add(
+        GestureDetector(
+          onTap: () => _onDateSelected(day),
+          child: Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: notes.containsKey(day)
+                  ? pastelColors[day % pastelColors.length]
+                  : Colors.transparent,
+              shape: BoxShape.rectangle,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (DateTime.now().day == day &&
+                    DateTime.now().month == currentMonth &&
+                    DateTime.now().year == currentYear)
+                  Container(
+                    height: 40,
+                    width: 40,
+                    decoration: const BoxDecoration(
+                      color: Color.fromARGB(255, 181, 178, 178),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      day.toString(),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    if (notes.containsKey(day))
+                      const Text(
+                        'Event',
+                        style: TextStyle(fontSize: 10, color: Colors.red),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      if (cells.length == 7) {
+        rows.add(TableRow(children: cells));
+        cells = [];
       }
     }
 
-    return usernames;
+    if (cells.isNotEmpty) {
+      for (int i = cells.length; i < 7; i++) {
+        cells.add(Container());
+      }
+      rows.add(TableRow(children: cells));
+    }
+
+    return rows;
   }
 
   @override
   Widget build(BuildContext context) {
+    final int currentMonth = selectedDate.month;
+    final int currentYear = selectedDate.year;
+    final int daysInMonth = DateTime(currentYear, currentMonth + 1, 0).day;
+    final int firstWeekday = DateTime(currentYear, currentMonth, 1).weekday;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 19, 34, 48),
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.white,
+              backgroundImage: const AssetImage('assets/k.jpg'),
+            ),
+            const SizedBox(width: 10),
             Text(
-              "Welcome $firstName!",
+              "Welcome, $firstName!",
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.notifications, color: Colors.white),
-              onPressed: () {},
-            ),
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          color: const Color.fromARGB(255, 235, 218, 181),
+      body: Container(
+        color: const Color.fromARGB(255, 235, 218, 181),
+        child: SingleChildScrollView(
           child: Column(
             children: [
-              // Profile Section
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 42,
-                      backgroundColor: Colors.white,
-                      child: const CircleAvatar(
-                        radius: 40,
-                        backgroundImage: AssetImage('assets/k.jpg'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            firstName,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            matricNumber,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
               // Image Carousel Section
               SizedBox(
                 height: 200,
@@ -176,26 +339,12 @@ class _MainPageLState extends State<MainPageL> {
                   },
                 ),
               ),
-
-              // Booking Details Section
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildBookingCard("Bookings today", "23", Colors.red[300]!),
-                    _buildBookingCard(
-                        "Bookings week", "108", Colors.blue[300]!),
-                  ],
-                ),
-              ),
-
-              // Upcoming Booking Section
+              // Calendar Section
               Padding(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16.0, vertical: 16.0),
                 child: Container(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -209,81 +358,59 @@ class _MainPageLState extends State<MainPageL> {
                     ],
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Upcoming Booking",
-                        style: TextStyle(
+                      Text(
+                        '${months[currentMonth]} $currentYear',
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      FutureBuilder<List<String>>(
-                        future: _fetchAllUsernames(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return const Center(
-                              child: Text("No Bookings Found."),
-                            );
-                          }
-
-                          final usernames = snapshot.data!;
-                          return Column(
-                            children: usernames.map((username) {
-                              return Column(
-                                children: [
-                                  Text(
-                                    username,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.normal,
+                      const SizedBox(height: 10),
+                      Table(
+                        border: TableBorder.all(
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                        ),
+                        children: [
+                          TableRow(
+                            children: [
+                              for (String day in [
+                                'Mon',
+                                'Tue',
+                                'Wed',
+                                'Thu',
+                                'Fri',
+                                'Sat',
+                                'Sun'
+                              ])
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  color: const Color.fromARGB(255, 197, 154, 186),
+                                  child: Center(
+                                    child: Text(
+                                      day,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
-                                  const Divider(
-                                    color: Colors.grey,
-                                    thickness: 1,
-                                    height: 20,
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const BookLPage()),
-                            );
-                          },
-                          child: const Text(
-                            "View more",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color.fromARGB(255, 19, 34, 48),
-                              fontWeight: FontWeight.bold,
-                            ),
+                                ),
+                            ],
                           ),
-                        ),
+                          ..._buildCalendarRows(
+                            daysInMonth,
+                            firstWeekday,
+                            currentMonth,
+                            currentYear,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -319,41 +446,6 @@ class _MainPageLState extends State<MainPageL> {
             label: "My Acc",
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBookingCard(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        margin: const EdgeInsets.symmetric(horizontal: 8.0),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
