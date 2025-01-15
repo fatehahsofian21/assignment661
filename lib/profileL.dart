@@ -91,7 +91,7 @@ class _ProfileLPageState extends State<ProfileLPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color.fromARGB(255, 9, 42, 70),
         elevation: 0,
         automaticallyImplyLeading: true,
         leading: IconButton(
@@ -118,7 +118,7 @@ class _ProfileLPageState extends State<ProfileLPage> {
               padding:
                   const EdgeInsets.symmetric(vertical: 10, horizontal: 140),
               decoration: const BoxDecoration(
-                color: Colors.blue,
+                color: Color.fromARGB(255, 13, 49, 76),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -127,7 +127,7 @@ class _ProfileLPageState extends State<ProfileLPage> {
               child: Column(
                 children: [
                   CircleAvatar(
-                    radius: 42,
+                    radius: 55,
                     backgroundColor: Colors.white,
                     child: const CircleAvatar(
                       radius: 40,
@@ -147,7 +147,7 @@ class _ProfileLPageState extends State<ProfileLPage> {
                     ),
                   if (isEditMode)
                     _buildEditableTextField(nameController, isBold: true),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 10),
                   Text(
                     matricNumber,
                     textAlign: TextAlign.center,
@@ -171,7 +171,7 @@ class _ProfileLPageState extends State<ProfileLPage> {
                   _buildInfoTile("Campus", campusController),
                   _buildInfoTile("Email", TextEditingController(text: email)),
                   _buildInfoTile("Phone Number", phoneController),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 70),
                   Center(
                     child: isEditMode
                         ? ElevatedButton(
@@ -210,7 +210,8 @@ class _ProfileLPageState extends State<ProfileLPage> {
                               });
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor:
+                                  const Color.fromARGB(255, 185, 185, 185),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -226,7 +227,7 @@ class _ProfileLPageState extends State<ProfileLPage> {
                             ),
                           ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Center(
                     child: ElevatedButton(
                       onPressed: _logout,

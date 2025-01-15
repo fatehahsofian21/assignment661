@@ -187,7 +187,7 @@ class _ProfileSPageState extends State<ProfileSPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color.fromARGB(255, 9, 47, 78),
         elevation: 0,
         automaticallyImplyLeading: true,
         leading: IconButton(
@@ -213,7 +213,7 @@ class _ProfileSPageState extends State<ProfileSPage> {
               padding:
                   const EdgeInsets.symmetric(vertical: 20, horizontal: 120),
               decoration: const BoxDecoration(
-                color: Colors.blue,
+                color: Color.fromARGB(255, 13, 55, 88),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -314,7 +314,8 @@ class _ProfileSPageState extends State<ProfileSPage> {
                               });
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor:
+                                  const Color.fromARGB(255, 184, 184, 184),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -330,7 +331,7 @@ class _ProfileSPageState extends State<ProfileSPage> {
                             ),
                           ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Center(
                     child: ElevatedButton(
                       onPressed: _logout,

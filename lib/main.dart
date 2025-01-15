@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // Import for FCM
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'login2.dart';
@@ -18,9 +18,9 @@ import 'upcomingL.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp(); // Ensure Firebase initializes
-    await requestLocationPermission(); // Handle permissions
-    await setupFCM(); // Setup FCM and get the device token
+    await Firebase.initializeApp(); // Initialize Firebase
+    await requestLocationPermission(); // Handle location permissions
+    await setupFCM(); // Setup Firebase Cloud Messaging
   } catch (e) {
     debugPrint("Error initializing Firebase or permissions: $e");
   }
@@ -77,7 +77,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AuthWrapper(),
+      home: const SplashScreen(), // Set SplashScreen as the first screen
       routes: {
         '/login2': (context) => const LoginPage2(),
         '/mainpage': (context) => MainPage(
@@ -114,40 +114,125 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage2()),
+      );
+    });
 
-        if (snapshot.hasError) {
-          return const Scaffold(
-            body: Center(child: Text("An error occurred. Please try again.")),
-          );
-        }
-
-        if (snapshot.hasData) {
-          final user = snapshot.data;
-          final email = user?.email ?? '';
-
-          if (email.contains('@lecturer.uitm.edu.my')) {
-            return MainPageL(email: email);
-          } else if (email.contains('@student.uitm.edu.my')) {
-            final userName = email.split('@')[0];
-            return DashboardPage(userName: userName);
-          }
-        }
-
-        return const LoginPage2(); // Default to login if no user is found
-      },
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Background color
+          Container(
+            color: const Color.fromARGB(255, 11, 41, 65),
+          ),
+          // Circular decorations
+          Positioned(
+            top: 50,
+            left: -30,
+            child: CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.blue[200],
+              child: const Icon(Icons.computer, size: 40, color: Colors.blue),
+            ),
+          ),
+          Positioned(
+            top: 150,
+            right: -30,
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.green[200],
+              child: const Icon(Icons.book, size: 40, color: Colors.green),
+            ),
+          ),
+          const Positioned(
+            bottom: 200,
+            left: 10,
+            child: CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.message, size: 25, color: Colors.orange),
+            ),
+          ),
+          Positioned(
+            bottom: 160,
+            right: 10,
+            child: CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.purple[100],
+              child: const Icon(Icons.phone_android, size: 25, color: Colors.purple),
+            ),
+          ),
+          // Main content
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // App Image
+                Image.asset(
+                  'assets/a.png', // Replace with your image path
+                  height: 170,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 10),
+                // App Name
+                const Text(
+                  'LecturerMeet',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Updated Quote
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    'Successful and unsuccessful people do not vary greatly in their abilities. They vary in their desires to reach their potential.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 100),
+                // Get Started Button
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage2()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 234, 209, 144),
+                    minimumSize: const Size(200, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    'Get Started',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color.fromARGB(255, 30, 26, 26),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
